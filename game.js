@@ -148,20 +148,25 @@ function initSocket() {
         if (!targetPlayer) return;
         
         if (info.role !== myRole) {
-            // Set lerp targets
-            targetPlayer.targetX = info.x;
-            targetPlayer.targetY = info.y;
-            targetPlayer.hp = info.hp;
-            if (!targetPlayer.isAttacking && !targetPlayer.isDashing) {
-                targetPlayer.dir = info.dir;
+            // Initialize position buffer if not exists
+            if (!targetPlayer.positionBuffer) {
+                targetPlayer.positionBuffer = [];
             }
             
-            // If they desync too far (e.g., 150px) due to major lag, hard snap them
-            const dist = Math.hypot(targetPlayer.x - info.x, targetPlayer.y - info.y);
-            if (dist > 150) {
-                targetPlayer.x = info.x;
-                targetPlayer.y = info.y;
+            // Push incoming state with local timestamp to history buffer
+            targetPlayer.positionBuffer.push({
+                x: info.x,
+                y: info.y,
+                dir: info.dir,
+                time: performance.now()
+            });
+            
+            // Keep buffer size manageable (last 20 frames is plenty for ~333ms at 60Hz)
+            if (targetPlayer.positionBuffer.length > 20) {
+                targetPlayer.positionBuffer.shift();
             }
+            
+            targetPlayer.hp = info.hp;
         }
     });
 
@@ -1196,7 +1201,7 @@ class Player {
         let index = 0;
 
         const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
-        const isMovingNetwork = this.targetX !== undefined && Math.abs(this.targetX - this.x) > 1.0;
+        const isMovingNetwork = this.positionBuffer !== undefined && Math.abs(this.vx) > 0.5;
 
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
@@ -1258,7 +1263,7 @@ class Player {
         let activeList = anims.idle;
         
         const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
-        const isMovingNetwork = this.targetX !== undefined && Math.abs(this.targetX - this.x) > 1.0;
+        const isMovingNetwork = this.positionBuffer !== undefined && Math.abs(this.vx) > 0.5;
 
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
@@ -2662,19 +2667,57 @@ function gameLoop(timestamp) {
         player1.update(dt, player2);
         player2.update(dt, player1);
         
-        // Apply Linear Interpolation (Lerp) for the network opponent to prevent teleporting
+        // Apply Entity Interpolation (Jitter Buffer) for network opponent to ensure perfectly smooth movement
         if (socket && myRole) {
             let opponentP = myRole === 'Player1' ? player2 : player1;
-            if (opponentP && opponentP.targetX !== undefined) {
+            if (opponentP && opponentP.positionBuffer && opponentP.positionBuffer.length > 0) {
                 const prevX = opponentP.x;
                 const prevY = opponentP.y;
                 
-                // Smooth interpolation factor (20% per frame equivalent, adjusted by dt)
-                const lerpFactor = 1 - Math.pow(1 - 0.20, dt);
-                opponentP.x = opponentP.x + (opponentP.targetX - opponentP.x) * lerpFactor;
-                opponentP.y = opponentP.y + (opponentP.targetY - opponentP.y) * lerpFactor;
+                // 45ms jitter buffer (approx 2.5 frames at 60Hz tick rate)
+                const renderTime = performance.now() - 45;
                 
-                // Back-calculate velocity to keep physics engine synchronized
+                let pastState = null;
+                let futureState = null;
+                
+                // Find bounding states
+                for (let i = opponentP.positionBuffer.length - 1; i >= 0; i--) {
+                    if (opponentP.positionBuffer[i].time <= renderTime) {
+                        pastState = opponentP.positionBuffer[i];
+                        if (i + 1 < opponentP.positionBuffer.length) {
+                            futureState = opponentP.positionBuffer[i + 1];
+                        }
+                        break;
+                    }
+                }
+                
+                if (pastState && futureState) {
+                    // Interpolate between past and future
+                    const t = (renderTime - pastState.time) / (futureState.time - pastState.time);
+                    opponentP.x = pastState.x + (futureState.x - pastState.x) * t;
+                    opponentP.y = pastState.y + (futureState.y - pastState.y) * t;
+                    
+                    if (!opponentP.isAttacking && !opponentP.isDashing) {
+                        opponentP.dir = pastState.dir;
+                    }
+                } else if (pastState) {
+                    // Render time is newer than anything we have (starvation)
+                    opponentP.x = pastState.x;
+                    opponentP.y = pastState.y;
+                    if (!opponentP.isAttacking && !opponentP.isDashing) {
+                        opponentP.dir = pastState.dir;
+                    }
+                } else {
+                    // Render time is older than the oldest state (happens at very start)
+                    const oldestState = opponentP.positionBuffer[0];
+                    opponentP.x = oldestState.x;
+                    opponentP.y = oldestState.y;
+                    if (!opponentP.isAttacking && !opponentP.isDashing) {
+                        opponentP.dir = oldestState.dir;
+                    }
+                }
+                
+                // Back-calculate velocity to keep physics engine/animation logic synchronized
                 if (dt > 0) {
                     opponentP.vx = (opponentP.x - prevX) / dt;
                     opponentP.vy = (opponentP.y - prevY) / dt;
@@ -2710,9 +2753,9 @@ function gameLoop(timestamp) {
     // 7. Update camera shake timer
     updateCameraShake(dt);
 
-    // 8. Sync state with server periodically (30Hz)
+    // 8. Sync state with server periodically (60Hz)
     const now = performance.now();
-    if (now - lastStateEmitTime >= 33.3 && socket && myRole) {
+    if (now - lastStateEmitTime >= 16.6 && socket && myRole) {
         lastStateEmitTime = now;
         let myP = myRole === 'Player1' ? player1 : player2;
         if (myP) {
