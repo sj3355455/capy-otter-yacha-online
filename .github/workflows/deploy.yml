@@ -25,11 +25,11 @@ jobs:
         run: |
           curl -L -o butler.zip https://github.com/itchio/butler/releases/latest/download/butler-linux-amd64.zip
           unzip -o butler.zip
-          chmod +x butler
-          ./butler -V
+          chmod +x linux-amd64/butler
+          ./linux-amd64/butler -V
           
       - name: Push to itch.io
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
-          ./butler push dist sole0914/capysudal-yacha-online:html5
+          ./linux-amd64/butler push dist sole0914/capysudal-yacha-online:html5
