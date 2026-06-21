@@ -1140,13 +1140,16 @@ class Player {
                       (this.characterType === 'owl' ? p3Animations : p4Animations));
         let activeList = anims.idle;
         
+        const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
+        const isMovingNetwork = this.targetX !== undefined && Math.abs(this.targetX - this.x) > 1.0;
+
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
         } else if (this.specialActiveFrames > 0 && this.characterType !== 'quokka') {
             activeList = anims.special;
         } else if (this.attackActiveFrames > 0) {
             activeList = anims.attack;
-        } else if ((Math.abs(this.vx) > 0.4 && (this.inputs.moveLeft || this.inputs.moveRight)) || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
+        } else if (isMovingLocally || isMovingNetwork || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
             activeList = anims.move;
             this.animTimer += dt;
             const frameTime = 6;

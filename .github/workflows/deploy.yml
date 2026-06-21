@@ -1,0 +1,36 @@
+name: Deploy to itch.io
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare build directory
+        run: |
+          mkdir dist
+          cp index.html dist/
+          cp game.js dist/
+          cp pve.js dist/
+          cp style.css dist/
+          cp -r image dist/
+          cp -r sound dist/
+
+      - name: Download Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+          
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+        run: |
+          ./butler push dist sole0914/capysudal-yacha-online:html5
