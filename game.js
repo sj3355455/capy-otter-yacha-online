@@ -3653,10 +3653,14 @@ function showGameOverOverlay(wId) {
                 victorySrc = 'image/victory/quokka_victory.png';
             }
             if (showImg) {
+                victoryImg.style.display = 'none'; // Hide first to prevent showing previous image
+                victoryImg.onload = () => {
+                    victoryImg.style.display = 'block';
+                    victoryImg.onload = null; // Clear handler
+                };
                 victoryImg.src = victorySrc;
                 victoryImg.style.borderColor = player1.color;
                 victoryImg.style.boxShadow = `0 0 20px ${player1.color}cc`;
-                victoryImg.style.display = 'block';
             } else {
                 victoryImg.style.display = 'none';
             }
@@ -3677,10 +3681,14 @@ function showGameOverOverlay(wId) {
                 victorySrc = 'image/victory/quokka_victory.png';
             }
             if (showImg) {
+                victoryImg.style.display = 'none'; // Hide first to prevent showing previous image
+                victoryImg.onload = () => {
+                    victoryImg.style.display = 'block';
+                    victoryImg.onload = null; // Clear handler
+                };
                 victoryImg.src = victorySrc;
                 victoryImg.style.borderColor = player2.color;
                 victoryImg.style.boxShadow = `0 0 20px ${player2.color}cc`;
-                victoryImg.style.display = 'block';
             } else {
                 victoryImg.style.display = 'none';
             }
