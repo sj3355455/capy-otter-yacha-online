@@ -96,6 +96,11 @@
                         <button id="pvp-start-btn" class="wood-btn title-start-btn">VS PLAYER (LOCAL)</button>
                         <button id="pve-start-btn" class="wood-btn title-start-btn">VS COMPUTER (PVE)</button>
                         <button id="online-start-btn" class="wood-btn title-start-btn" style="background: linear-gradient(180deg, #ff9800 0%, #f57c00 100%);">ONLINE MULTIPLAYER</button>
+                        <!-- Server Config for Online Match -->
+                        <div id="server-config-container" style="display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 5px;">
+                            <input type="text" id="server-url-input" placeholder="https://your-app.onrender.com" style="width: 280px; padding: 6px 12px; border: 2px solid #5a4a38; border-radius: 8px; background: #2b221a; color: #fff; text-align: center; font-size: 11px; font-family: monospace; outline: none; transition: border-color 0.2s;">
+                            <span id="connection-status-lbl" style="font-size: 11px; color: #aaa; font-family: 'Noto Sans KR', sans-serif; text-shadow: 1px 1px 2px black;"></span>
+                        </div>
                     </div>
                 </div>
 

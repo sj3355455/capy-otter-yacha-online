@@ -5,6 +5,7 @@ ctx.imageSmoothingEnabled = true; // Enable anti-aliasing for smoother visuals
 ctx.imageSmoothingQuality = 'high'; // Use high quality smoothing for clean downscaling
 
 // Multiplayer Socket setup
+const DEFAULT_SERVER_URL = 'https://capy-otter-yacha-online.onrender.com';
 let socket = null;
 let myRole = 'Spectator';
 let isReady = false;
@@ -15,8 +16,58 @@ let lastStateEmitTime = 0;
 
 function initSocket() {
     if (socket) return;
-    socket = typeof io !== 'undefined' ? io() : null;
-    if (!socket) return;
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    let serverUrl = 'http://localhost:3000';
+    
+    const statusLbl = document.getElementById('connection-status-lbl');
+    const urlInput = document.getElementById('server-url-input');
+    
+    if (!isLocal) {
+        serverUrl = (urlInput && urlInput.value.trim()) || localStorage.getItem('capy_server_url') || DEFAULT_SERVER_URL;
+    }
+    
+    if (statusLbl) {
+        statusLbl.style.color = '#ff9800';
+        statusLbl.textContent = '서버 연결 시도 중... (첫 접속 시 30초 소요 가능)';
+    }
+
+    socket = typeof io !== 'undefined' ? io(serverUrl, { timeout: 45000 }) : null;
+    if (!socket) {
+        if (statusLbl) {
+            statusLbl.style.color = '#f44336';
+            statusLbl.textContent = '연결 실패: Socket.io를 불러올 수 없습니다.';
+        }
+        return;
+    }
+
+    socket.on('connect', () => {
+        if (statusLbl) {
+            statusLbl.style.color = '#4caf50';
+            statusLbl.textContent = '연결 성공!';
+        }
+        if (!isLocal && urlInput) {
+            localStorage.setItem('capy_server_url', serverUrl);
+        }
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+        if (statusLbl) {
+            statusLbl.style.color = '#f44336';
+            statusLbl.textContent = '연결 실패. 서버가 준비 중일 수 있으니 잠시 후 다시 시도해 주세요.';
+        }
+        socket.disconnect();
+        socket = null;
+    });
+
+    socket.on('disconnect', () => {
+        if (statusLbl) {
+            statusLbl.style.color = '#aaa';
+            statusLbl.textContent = '서버 연결이 끊어졌습니다.';
+        }
+        socket = null;
+    });
 
     socket.on('roleAssignment', (role) => {
         myRole = role;
@@ -2748,6 +2799,25 @@ if (onlineStartBtn) {
         initSocket();
         enterCharSelectScreen();
     });
+}
+
+// Initialize Server URL configuration on page load
+const serverUrlInput = document.getElementById('server-url-input');
+if (serverUrlInput) {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal) {
+        serverUrlInput.value = 'http://localhost:3000';
+        serverUrlInput.disabled = true;
+        serverUrlInput.style.opacity = '0.6';
+        serverUrlInput.title = '로컬 환경에서는 주소를 설정할 수 없습니다.';
+    } else {
+        const savedUrl = localStorage.getItem('capy_server_url') || DEFAULT_SERVER_URL;
+        serverUrlInput.value = savedUrl;
+        
+        serverUrlInput.addEventListener('input', () => {
+            localStorage.setItem('capy_server_url', serverUrlInput.value.trim());
+        });
+    }
 }
 
 const p1Selector = document.getElementById('p1-char-selector');
