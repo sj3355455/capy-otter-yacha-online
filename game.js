@@ -452,6 +452,8 @@ function mapLocalKey(key) {
         if (key === 'ArrowDown') return 's';
         if (key === 'a') return 'f';
         if (key === 's') return 'g';
+        // Disable original WASD FG in PvE
+        if (['w', 'a', 's', 'd', 'f', 'g'].includes(key)) return null;
     } else if (gameMode === 'online') {
         if (myRole === 'Player1') {
             if (key === 'ArrowLeft') return 'a';
@@ -460,9 +462,13 @@ function mapLocalKey(key) {
             if (key === 'ArrowDown') return 's';
             if (key === 'a') return 'f';
             if (key === 's') return 'g';
+            // Disable original WASD FG
+            if (['w', 'a', 's', 'd', 'f', 'g'].includes(key)) return null;
         } else if (myRole === 'Player2') {
             if (key === 'a') return '[';
             if (key === 's') return ']';
+            // Disable original P2 keys ([ and ]) and original WASD FG
+            if (['[', ']', 'w', 'a', 's', 'd', 'f', 'g'].includes(key)) return null;
         }
     }
     return key;
@@ -480,6 +486,7 @@ window.addEventListener('keydown', (e) => {
     
     // Remap local keys to role-specific keys if in PvE or Online mode
     key = mapLocalKey(key);
+    if (!key) return; // Ignore if mapped to null (disabled original controls)
     
     // Check if the key belongs to my role
     const isP1Key = ['w', 'a', 's', 'd', 'f', 'g'].includes(key);
@@ -506,6 +513,7 @@ window.addEventListener('keyup', (e) => {
     
     // Remap local keys to role-specific keys if in PvE or Online mode
     key = mapLocalKey(key);
+    if (!key) return; // Ignore if mapped to null (disabled original controls)
     
     const isP1Key = ['w', 'a', 's', 'd', 'f', 'g'].includes(key);
     const isP2Key = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(key);
@@ -2786,9 +2794,77 @@ const pvpStartBtn = document.getElementById('pvp-start-btn');
 const pveStartBtn = document.getElementById('pve-start-btn');
 const onlineStartBtn = document.getElementById('online-start-btn');
 
+function updateSpecialDescText(playerNum, charType) {
+    const specDesc = document.getElementById(`p${playerNum}-special-desc`);
+    if (!specDesc) return;
+    
+    let text = ": ???";
+    if (charType === 'capybara') text = ": 돌진";
+    else if (charType === 'otter') text = ": 파도발차기";
+    else if (charType === 'owl') text = ": 돌풍";
+    else if (charType === 'quokka') text = ": 전광석화";
+    
+    specDesc.textContent = text;
+}
+
+function updateControlsGuideUI() {
+    const p1KeyList = document.getElementById('p1-key-list');
+    const p2KeyList = document.getElementById('p2-key-list');
+    
+    if (!p1KeyList || !p2KeyList) return;
+    
+    if (gameMode === 'pvp') {
+        p1KeyList.style.display = 'block';
+        p2KeyList.style.display = 'block';
+        p1KeyList.innerHTML = `
+            <li><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="key-desc">: 이동</span></li>
+            <li><span class="key">F</span><span class="key-desc">: 일반 공격</span></li>
+            <li><span class="key">G</span><span class="key-desc" id="p1-special-desc">: 돌진</span></li>
+        `;
+        p2KeyList.innerHTML = `
+            <li><span class="key">▲</span><span class="key">▼</span><span class="key">◀</span><span class="key">▶</span><span class="key-desc">: 이동</span></li>
+            <li><span class="key">[</span><span class="key-desc">: 일반 공격</span></li>
+            <li><span class="key">]</span><span class="key-desc" id="p2-special-desc">: 파도발차기</span></li>
+        `;
+    } else if (gameMode === 'pve') {
+        p1KeyList.style.display = 'block';
+        p2KeyList.style.display = 'none'; // Hide Computer controls guide
+        p1KeyList.innerHTML = `
+            <li><span class="key">▲</span><span class="key">▼</span><span class="key">◀</span><span class="key">▶</span><span class="key-desc">: 이동</span></li>
+            <li><span class="key">A</span><span class="key-desc">: 일반 공격</span></li>
+            <li><span class="key">S</span><span class="key-desc" id="p1-special-desc">: 돌진</span></li>
+        `;
+    } else if (gameMode === 'online') {
+        if (myRole === 'Player1') {
+            p1KeyList.style.display = 'block';
+            p2KeyList.style.display = 'none'; // Hide opponent's controls guide
+            p1KeyList.innerHTML = `
+                <li><span class="key">▲</span><span class="key">▼</span><span class="key">◀</span><span class="key">▶</span><span class="key-desc">: 이동</span></li>
+                <li><span class="key">A</span><span class="key-desc">: 일반 공격</span></li>
+                <li><span class="key">S</span><span class="key-desc" id="p1-special-desc">: 돌진</span></li>
+            `;
+        } else if (myRole === 'Player2') {
+            p1KeyList.style.display = 'none'; // Hide opponent's controls guide
+            p2KeyList.style.display = 'block';
+            p2KeyList.innerHTML = `
+                <li><span class="key">▲</span><span class="key">▼</span><span class="key">◀</span><span class="key">▶</span><span class="key-desc">: 이동</span></li>
+                <li><span class="key">A</span><span class="key-desc">: 일반 공격</span></li>
+                <li><span class="key">S</span><span class="key-desc" id="p2-special-desc">: 파도발차기</span></li>
+            `;
+        } else {
+            p1KeyList.style.display = 'none';
+            p2KeyList.style.display = 'none';
+        }
+    }
+    
+    updateSpecialDescText(1, p1SelectedChar);
+    updateSpecialDescText(2, p2SelectedChar);
+}
+
 function enterCharSelectScreen() {
     titleScreen.classList.remove('active');
     charSelectScreen.classList.add('active');
+    updateControlsGuideUI(); // Dynamically update control UI based on mode/role
     drawAllPreviews(); // Draw previews when selection screen opens
     
     // Make mute buttons visible on character select screen
