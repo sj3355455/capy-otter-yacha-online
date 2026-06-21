@@ -1143,6 +1143,9 @@ class Player {
         let activeList = anims.idle;
         let index = 0;
 
+        const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
+        const isMovingNetwork = this.targetX !== undefined && Math.abs(this.targetX - this.x) > 1.0;
+
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
             index = 0;
@@ -1158,7 +1161,7 @@ class Player {
             activeList = anims.attack;
             const progress = this.maxAttackActive - this.attackActiveFrames;
             index = Math.min(activeList.length - 1, Math.floor(progress / (this.maxAttackActive / activeList.length)));
-        } else if (Math.abs(this.vx) > 0.4 || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
+        } else if (isMovingLocally || isMovingNetwork || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
             activeList = anims.move;
             index = this.animFrameIndex % activeList.length;
         } else {
