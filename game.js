@@ -89,7 +89,7 @@ function initSocket() {
         
         if (gameMode === 'online') {
             if (onlineStartBtn) {
-                onlineStartBtn.textContent = 'ONLINE MULTIPLAYER';
+                onlineStartBtn.textContent = 'Online Multiplay';
                 onlineStartBtn.disabled = false;
             }
             enterCharSelectScreen();

@@ -859,7 +859,7 @@ footer {
     font-size: 3.8rem;
     font-weight: 900;
     font-family: 'Noto Sans KR', sans-serif;
-    background: linear-gradient(135deg, #603813 0%, #42210b 100%);
+    background: linear-gradient(135deg, #ffe066 0%, #f57c00 50%, #d84315 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-top: 155px; /* Pushed title further down from the top */
@@ -869,22 +869,29 @@ footer {
 }
 
 .title-start-btn {
-    font-size: 1.25rem !important;
-    padding: 16px 64px !important;
-    box-shadow: 0 6px 25px rgba(255, 85, 0, 0.35) !important;
-    margin-top: 15px; /* Restored button position (not pushed down) */
+    font-size: 0.88rem !important;
+    width: 260px !important;
+    height: 45px !important;
+    box-shadow: 0 4px 18px rgba(255, 85, 0, 0.25) !important;
+    margin-top: 10px; /* Restored button position (not pushed down) */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
 }
 
 @keyframes titleGlow {
     from {
         transform: scale(1.0);
-        filter: drop-shadow(0 0 8px rgba(96, 56, 19, 0.35));
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 8px rgba(245, 124, 0, 0.35));
     }
     to {
         transform: scale(1.03);
-        filter: drop-shadow(0 0 15px rgba(96, 56, 19, 0.55));
+        filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 18px rgba(245, 124, 0, 0.65));
     }
 }
+
 
 /* Character Selection Previews */
 .char-preview-container {
