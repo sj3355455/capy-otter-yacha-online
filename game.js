@@ -32,7 +32,10 @@ function initSocket() {
         statusLbl.textContent = '서버 연결 시도 중... (첫 접속 시 30초 소요 가능)';
     }
 
-    socket = typeof io !== 'undefined' ? io(serverUrl, { timeout: 45000 }) : null;
+    socket = typeof io !== 'undefined' ? io(serverUrl, { 
+        timeout: 45000,
+        transports: ['websocket']
+    }) : null;
     if (!socket) {
         if (statusLbl) {
             statusLbl.style.color = '#f44336';
