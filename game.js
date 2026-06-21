@@ -442,12 +442,44 @@ const HANGUL_TO_ENG = {
     'ㅎ': 'g'
 };
 
+// Helper to map physical keys to virtual keys in PvE and Online modes
+function mapLocalKey(key) {
+    if (gameMode === 'pve') {
+        // Local player is always Player 1 in PvE
+        if (key === 'ArrowLeft') return 'a';
+        if (key === 'ArrowRight') return 'd';
+        if (key === 'ArrowUp') return 'w';
+        if (key === 'ArrowDown') return 's';
+        if (key === 'a') return 'f';
+        if (key === 's') return 'g';
+    } else if (gameMode === 'online') {
+        if (myRole === 'Player1') {
+            if (key === 'ArrowLeft') return 'a';
+            if (key === 'ArrowRight') return 'd';
+            if (key === 'ArrowUp') return 'w';
+            if (key === 'ArrowDown') return 's';
+            if (key === 'a') return 'f';
+            if (key === 's') return 'g';
+        } else if (myRole === 'Player2') {
+            if (key === 'a') return '[';
+            if (key === 's') return ']';
+        }
+    }
+    return key;
+}
+
 // Key Listeners
 window.addEventListener('keydown', (e) => {
     let key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (HANGUL_TO_ENG[key]) {
         key = HANGUL_TO_ENG[key];
     }
+    
+    // Save original key for scroll prevention
+    const originalKey = key;
+    
+    // Remap local keys to role-specific keys if in PvE or Online mode
+    key = mapLocalKey(key);
     
     // Check if the key belongs to my role
     const isP1Key = ['w', 'a', 's', 'd', 'f', 'g'].includes(key);
@@ -461,7 +493,7 @@ window.addEventListener('keydown', (e) => {
     }
     
     // Prevent default scrolling for arrows and space
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(originalKey)) {
         e.preventDefault();
     }
 });
@@ -471,6 +503,9 @@ window.addEventListener('keyup', (e) => {
     if (HANGUL_TO_ENG[key]) {
         key = HANGUL_TO_ENG[key];
     }
+    
+    // Remap local keys to role-specific keys if in PvE or Online mode
+    key = mapLocalKey(key);
     
     const isP1Key = ['w', 'a', 's', 'd', 'f', 'g'].includes(key);
     const isP2Key = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(key);
