@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카피수달야차</title>
+    <!-- Google Fonts: Orbitron & Press Start 2P -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- HUD (Heads-Up Display) -->
+        <header id="hud">
+            <!-- Player 1 Status -->
+            <div class="player-hud" id="p1-hud">
+                <div class="player-info">
+                    <span class="player-name p1-text">카피바라</span>
+                    <span class="player-hp-text" id="p1-hp-text">100 / 100</span>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill p1-hp-fill" id="p1-hp-bar" style="width: 100%;"></div>
+                    <div class="hp-bar-ghost" id="p1-hp-ghost" style="width: 100%;"></div>
+                </div>
+                <div class="cooldown-bar-container">
+                    <div class="cooldown-bar-fill p1-cooldown-fill" id="p1-cooldown-bar" style="width: 100%;"></div>
+                </div>
+                <div class="skills-container">
+                    <div class="skill-indicator" id="p1-special">
+                        <span class="key-cap">G</span>
+                        <div class="skill-cooldown" id="p1-cooldown-overlay"></div>
+                        <span class="skill-name">돌진</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VS Badge -->
+            <div id="vs-badge">VS</div>
+
+            <!-- Player 2 Status -->
+            <div class="player-hud" id="p2-hud">
+                <div class="player-info">
+                    <span class="player-hp-text" id="p2-hp-text">100 / 100</span>
+                    <span class="player-name p2-text">수달</span>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill p2-hp-fill" id="p2-hp-bar" style="width: 100%;"></div>
+                    <div class="hp-bar-ghost" id="p2-hp-ghost" style="width: 100%;"></div>
+                </div>
+                <div class="cooldown-bar-container">
+                    <div class="cooldown-bar-fill p2-cooldown-fill" id="p2-cooldown-bar" style="width: 100%;"></div>
+                </div>
+                <div class="skills-container" style="justify-content: flex-end;">
+                    <div class="skill-indicator" id="p2-special">
+                        <span class="key-cap">]</span>
+                        <div class="skill-cooldown" id="p2-cooldown-overlay"></div>
+                        <span class="skill-name">파도발차기</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Canvas Area -->
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas" width="1024" height="576"></canvas>
+            
+            <!-- In-game Control Buttons -->
+            <button id="back-to-menu-btn" class="ingame-control-btn back-btn" title="선택창으로 이동">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <button id="bgm-mute-btn" class="ingame-control-btn bgm-mute-btn" title="배경음악 음소거">
+                <svg id="bgm-mute-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+            </button>
+            <button id="total-mute-btn" class="ingame-control-btn total-mute-btn" title="전체 소리 음소거">
+                <svg id="total-mute-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+            </button>
+            
+            <!-- Start Screen Overlay -->
+            <div id="start-overlay" class="overlay active">
+                <!-- Title Screen (시작창) -->
+                <div id="title-screen" class="active">
+                    <h1 class="game-title">카피수달야차</h1>
+                    <div class="title-btn-group" style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                        <button id="pvp-start-btn" class="wood-btn title-start-btn">VS PLAYER (LOCAL)</button>
+                        <button id="pve-start-btn" class="wood-btn title-start-btn">VS COMPUTER (PVE)</button>
+                        <button id="online-start-btn" class="wood-btn title-start-btn" style="background: linear-gradient(180deg, #ff9800 0%, #f57c00 100%);">ONLINE MULTIPLAYER</button>
+                    </div>
+                </div>
+
+                <!-- Character Selection Container (선택창) -->
+                <div id="char-select-screen" class="">
+                    <!-- 뒤로가기 버튼 -->
+                    <button id="char-select-back-btn" class="ingame-control-btn back-btn active" title="시작 화면으로 이동" style="z-index: 25;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <!-- 좌측 조작 패널 (양피지 스타일) -->
+                    <div class="start-panel left-panel">
+                        <h3 class="panel-title red-theme" id="p1-panel-title">PLAYER 1 (CAPYBARA)</h3>
+                        <div class="char-selector" id="p1-char-selector">
+                            <button class="char-btn active" data-char="capybara">카피바라</button>
+                            <button class="char-btn" data-char="otter">수달</button>
+                            <button class="char-btn" data-char="owl">부엉이</button>
+                            <button class="char-btn" data-char="quokka">쿼카</button>
+                            <button class="char-btn" data-char="random">랜덤</button>
+                        </div>
+                        <ul class="key-list" id="p1-key-list">
+                            <li><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span class="key-desc">: 이동</span></li>
+                            <li><span class="key">F</span><span class="key-desc">: 일반 공격</span></li>
+                            <li><span class="key">G</span><span class="key-desc" id="p1-special-desc">: 돌진</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- 중앙 대전 시작 및 맵 선택 -->
+                    <div class="start-center">
+                        <!-- 캐릭터 선택 프리뷰 추가 -->
+                        <div class="char-preview-container">
+                            <div id="p1-preview-box" class="preview-box capybara-theme">
+                                <canvas id="p1-preview-canvas" width="150" height="150"></canvas>
+                                <span id="p1-preview-label" class="preview-label p1-text">PLAYER 1</span>
+                                <span id="p1-ready-label" style="display: block; color: #ffeb3b; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; margin-top: 5px;"></span>
+                            </div>
+                            <div id="p2-preview-box" class="preview-box otter-theme">
+                                <canvas id="p2-preview-canvas" width="150" height="150"></canvas>
+                                <span id="p2-preview-label" class="preview-label p2-text">PLAYER 2</span>
+                                <span id="p2-ready-label" style="display: block; color: #ffeb3b; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; margin-top: 5px;"></span>
+                            </div>
+                        </div>
+
+                        <div class="map-select-container">
+                            <h4 class="map-select-title">전장 선택 (MAP)</h4>
+                            <div class="map-selector">
+                                <button class="map-btn active" data-map="meadow">초원</button>
+                                <button class="map-btn" data-map="colosseum">콜로<br>세움</button>
+                                <button class="map-btn" data-map="dojo">대련장</button>
+                                <button class="map-btn" data-map="random">랜덤</button>
+                            </div>
+                        </div>
+
+                        <!-- AI 난이도 선택 (PvE 모드일 때만 표시) -->
+                        <div id="difficulty-select-container" style="display: none; margin-top: 15px;">
+                            <h4 class="map-select-title" style="margin-bottom: 8px;">AI 난이도 (DIFFICULTY)</h4>
+                            <div class="map-selector">
+                                <button class="diff-btn" data-diff="easy">쉬움</button>
+                                <button class="diff-btn active" data-diff="normal">보통</button>
+                                <button class="diff-btn" data-diff="hard">어려움</button>
+                            </div>
+                        </div>
+                        <button id="battle-btn" class="wood-btn">READY</button>
+                        <div id="countdown-display" style="display: none; font-size: 48px; color: white; text-shadow: 2px 2px 5px red; margin-top: 20px; font-weight: bold;">3</div>
+                    </div>
+
+                    <!-- 우측 조작 패널 (양피지 스타일) -->
+                    <div class="start-panel right-panel">
+                        <h3 class="panel-title blue-theme" id="p2-panel-title">PLAYER 2 (OTTER)</h3>
+                        <div class="char-selector" id="p2-char-selector">
+                            <button class="char-btn" data-char="capybara">카피바라</button>
+                            <button class="char-btn active" data-char="otter">수달</button>
+                            <button class="char-btn" data-char="owl">부엉이</button>
+                            <button class="char-btn" data-char="quokka">쿼카</button>
+                            <button class="char-btn" data-char="random">랜덤</button>
+                        </div>
+                        <ul class="key-list" id="p2-key-list">
+                            <li><span class="key">▲</span><span class="key">▼</span><span class="key">◀</span><span class="key">▶</span><span class="key-desc">: 이동</span></li>
+                            <li><span class="key">[</span><span class="key-desc">: 일반 공격</span></li>
+                            <li><span class="key">]</span><span class="key-desc" id="p2-special-desc">: 파도발차기</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div id="gameover-overlay" class="overlay">
+                <img id="victory-img" src="" alt="Victory Illustration" style="max-width: 360px; max-height: 240px; margin-bottom: 20px; border-radius: 12px; border: 3px solid #5a4a38; box-shadow: 0 8px 24px rgba(0,0,0,0.6); display: none;" />
+                <h2 id="winner-text">PLAYER 1 WIN!</h2>
+                <div class="gameover-btn-row" style="display: flex; gap: 20px; margin-top: 10px;">
+                    <button id="restart-btn" class="glow-btn">RESTART MATCH</button>
+                    <button id="select-char-btn" class="glow-btn">CHAR SELECT</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <span id="map-desc">Battle in the lush green fields. Knock your opponent to the screen borders!</span>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+    <script src="pve.js"></script>
+</body>
+</html>
