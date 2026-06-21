@@ -15,7 +15,6 @@ jobs:
       - name: Prepare HTML5 Files
         run: |
           mkdir -p dist
-          # 프론트엔드 파일만 안전하게 복사 (파일/폴더가 없어도 멈추지 않음)
           cp index.html dist/ 2>/dev/null || true
           cp *.js dist/ 2>/dev/null || true
           cp *.css dist/ 2>/dev/null || true
