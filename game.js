@@ -78,7 +78,7 @@ function initSocket() {
         }
     });
 
-    socket.on('playerStateUpdate', (data) => {
+    socket.on('playerMoved', (data) => {
         if (!gameStarted || gameOver) return;
         const info = data.playerInfo;
         const targetPlayer = (info.role === 'Player1') ? player1 : player2;
