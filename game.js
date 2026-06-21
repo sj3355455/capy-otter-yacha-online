@@ -5,7 +5,7 @@ ctx.imageSmoothingEnabled = true; // Enable anti-aliasing for smoother visuals
 ctx.imageSmoothingQuality = 'high'; // Use high quality smoothing for clean downscaling
 
 // Multiplayer Socket setup
-const DEFAULT_SERVER_URL = 'https://capy-otter-yacha-online.onrender.com';
+const DEFAULT_SERVER_URL = 'https://capy-otter-yacha.onrender.com';
 let socket = null;
 let myRole = 'Spectator';
 let isReady = false;
