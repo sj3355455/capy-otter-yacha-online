@@ -959,3 +959,59 @@ footer {
     margin-top: 8px;
     letter-spacing: 1px;
 }
+
+/* --- Lobby Screen Styles --- */
+.room-item {
+    background: rgba(15, 18, 36, 0.8);
+    border: 1px solid rgba(255, 152, 0, 0.5);
+    border-radius: 4px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.room-item:hover {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: rgba(255, 152, 0, 0.8);
+}
+
+.room-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-item-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+}
+
+.room-item-details {
+    font-size: 12px;
+    color: #aaa;
+    display: flex;
+    gap: 10px;
+}
+
+.room-item-lock {
+    color: #ff9800;
+}
+
+.room-item-join-btn {
+    padding: 6px 12px;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: bold;
+}
+
+.room-item-join-btn:hover {
+    background: #f57c00;
+}

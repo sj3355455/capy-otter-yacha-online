@@ -52,6 +52,15 @@ function initSocket() {
         if (!isLocal && urlInput) {
             localStorage.setItem('capy_server_url', serverUrl);
         }
+
+        if (gameMode === 'online') {
+            document.getElementById('title-screen').classList.remove('active');
+            document.getElementById('lobby-screen').style.display = 'flex';
+            if (onlineStartBtn) {
+                onlineStartBtn.textContent = 'Online Multiplay';
+                onlineStartBtn.disabled = false;
+            }
+        }
     });
 
     socket.on('connect_error', (error) => {
@@ -72,10 +81,19 @@ function initSocket() {
         socket = null;
     });
 
-    socket.on('roleAssignment', (role) => {
-        myRole = role;
-        console.log("Assigned role:", myRole);
+    socket.on('roomJoined', (data) => {
+        myRole = data.role;
+        console.log("Joined room, role:", myRole);
         
+        if (data.map) {
+            const btn = document.querySelector(`.map-btn[data-map="${data.map}"]`);
+            if (btn) {
+                document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMap = data.map;
+            }
+        }
+
         // Setup initial text
         if (myRole === 'Player1') {
             document.getElementById('battle-btn').textContent = "READY";
@@ -88,12 +106,62 @@ function initSocket() {
         }
         
         if (gameMode === 'online') {
-            if (onlineStartBtn) {
-                onlineStartBtn.textContent = 'Online Multiplay';
-                onlineStartBtn.disabled = false;
-            }
+            document.getElementById('lobby-screen').style.display = 'none';
             enterCharSelectScreen();
         }
+    });
+
+    let currentJoinRoomId = null;
+
+    socket.on('roomListUpdate', (rooms) => {
+        const container = document.getElementById('room-list-container');
+        if (!container) return;
+        container.innerHTML = '';
+        if (rooms.length === 0) {
+            container.innerHTML = '<div style="color: #aaa; text-align: center; margin-top: 20px;">생성된 방이 없습니다.</div>';
+            return;
+        }
+
+        rooms.forEach(room => {
+            const item = document.createElement('div');
+            item.className = 'room-item';
+            
+            const info = document.createElement('div');
+            info.className = 'room-item-info';
+            
+            const name = document.createElement('div');
+            name.className = 'room-item-name';
+            name.textContent = room.name;
+            
+            const details = document.createElement('div');
+            details.className = 'room-item-details';
+            details.innerHTML = `<span>인원: ${room.playerCount}/2</span>` + (room.hasPassword ? '<span class="room-item-lock">🔒 비밀번호</span>' : '');
+            
+            info.appendChild(name);
+            info.appendChild(details);
+            
+            const joinBtn = document.createElement('button');
+            joinBtn.className = 'room-item-join-btn';
+            joinBtn.textContent = '입장';
+            joinBtn.onclick = () => {
+                if (room.hasPassword) {
+                    currentJoinRoomId = room.id;
+                    document.getElementById('join-room-modal').style.display = 'flex';
+                    document.getElementById('join-room-password').value = '';
+                    document.getElementById('join-room-password').focus();
+                } else {
+                    socket.emit('joinRoom', { roomId: room.id, password: null });
+                }
+            };
+            
+            item.appendChild(info);
+            item.appendChild(joinBtn);
+            container.appendChild(item);
+        });
+    });
+
+    socket.on('roomError', (msg) => {
+        alert(msg);
     });
 
     socket.on('roomState', (data) => {
@@ -176,9 +244,14 @@ function initSocket() {
 
     socket.on('playerDisconnected', (id) => {
         if (gameMode === 'online') {
-            returnToLobby();
+            // Someone disconnected. Go back to lobby.
             document.getElementById('p1-ready-label').textContent = "";
             document.getElementById('p2-ready-label').textContent = "";
+            alert('상대방의 연결이 끊어졌습니다. 로비로 돌아갑니다.');
+            
+            // Re-show lobby
+            document.getElementById('char-select-screen').classList.remove('active');
+            document.getElementById('lobby-screen').style.display = 'flex';
         }
     });
 
@@ -2986,6 +3059,50 @@ if (onlineStartBtn) {
         initSocket();
     });
 }
+
+// --- Lobby Event Listeners ---
+document.getElementById('lobby-back-btn').addEventListener('click', () => {
+    document.getElementById('lobby-screen').style.display = 'none';
+    document.getElementById('title-screen').classList.add('active');
+});
+
+document.getElementById('lobby-refresh-btn').addEventListener('click', () => {
+    // Already broadcasted periodically, but could emit 'requestRoomList'
+});
+
+document.getElementById('lobby-create-room-btn').addEventListener('click', () => {
+    document.getElementById('create-room-modal').style.display = 'flex';
+    document.getElementById('create-room-name').value = '';
+    document.getElementById('create-room-password').value = '';
+    document.getElementById('create-room-name').focus();
+});
+
+document.getElementById('create-room-cancel-btn').addEventListener('click', () => {
+    document.getElementById('create-room-modal').style.display = 'none';
+});
+
+document.getElementById('create-room-submit-btn').addEventListener('click', () => {
+    const name = document.getElementById('create-room-name').value;
+    const password = document.getElementById('create-room-password').value;
+    if (socket) {
+        socket.emit('createRoom', { name, password });
+    }
+    document.getElementById('create-room-modal').style.display = 'none';
+});
+
+document.getElementById('join-room-cancel-btn').addEventListener('click', () => {
+    document.getElementById('join-room-modal').style.display = 'none';
+    currentJoinRoomId = null;
+});
+
+document.getElementById('join-room-submit-btn').addEventListener('click', () => {
+    const password = document.getElementById('join-room-password').value;
+    if (socket && currentJoinRoomId) {
+        socket.emit('joinRoom', { roomId: currentJoinRoomId, password });
+    }
+    document.getElementById('join-room-modal').style.display = 'none';
+});
+
 
 // Initialize Server URL configuration on page load
 const serverUrlInput = document.getElementById('server-url-input');
