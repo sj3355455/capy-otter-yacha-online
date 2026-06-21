@@ -18,14 +18,15 @@ jobs:
           cp index.html dist/ 2>/dev/null || true
           cp *.js dist/ 2>/dev/null || true
           cp *.css dist/ 2>/dev/null || true
-          cp -r image dist/ 2>/dev/null || true
-          cp -r sound dist/ 2>/dev/null || true
+          if [ -d "image" ]; then cp -r image dist/; fi
+          if [ -d "sound" ]; then cp -r sound dist/; fi
 
-      - name: Download Butler
+      - name: Download Butler (Stable Mirror)
         run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip butler.zip
+          curl -L -o butler.zip https://github.com/itchio/butler/releases/latest/download/butler-linux-amd64.zip
+          unzip -o butler.zip
           chmod +x butler
+          ./butler -V
           
       - name: Push to itch.io
         env:
