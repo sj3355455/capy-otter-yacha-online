@@ -85,6 +85,10 @@ function initSocket() {
         }
         
         if (gameMode === 'online') {
+            if (onlineStartBtn) {
+                onlineStartBtn.textContent = 'ONLINE MULTIPLAYER';
+                onlineStartBtn.disabled = false;
+            }
             enterCharSelectScreen();
         }
     });
@@ -2797,9 +2801,14 @@ if (pveStartBtn) {
 
 if (onlineStartBtn) {
     onlineStartBtn.addEventListener('click', () => {
+        if (onlineStartBtn.disabled) return;
         onlineStartBtn.blur();
         gameMode = 'online';
         document.getElementById('difficulty-select-container').style.display = 'none';
+        
+        onlineStartBtn.textContent = 'CONNECTING...';
+        onlineStartBtn.disabled = true;
+        
         initSocket();
     });
 }
