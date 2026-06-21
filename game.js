@@ -11,6 +11,7 @@ let isReady = false;
 
 // Server-provided random indices to keep online games synchronized
 let serverRandomIndices = null;
+let lastStateEmitTime = 0;
 
 function initSocket() {
     if (socket) return;
@@ -85,14 +86,19 @@ function initSocket() {
         if (!targetPlayer) return;
         
         if (info.role !== myRole) {
-            const dist = Math.hypot(targetPlayer.x - info.x, targetPlayer.y - info.y);
-            if (dist > 30) {
-                targetPlayer.x = info.x;
-                targetPlayer.y = info.y;
-            }
+            // Set lerp targets
+            targetPlayer.targetX = info.x;
+            targetPlayer.targetY = info.y;
             targetPlayer.hp = info.hp;
             if (!targetPlayer.isAttacking && !targetPlayer.isDashing) {
                 targetPlayer.dir = info.dir;
+            }
+            
+            // If they desync too far (e.g., 150px) due to major lag, hard snap them
+            const dist = Math.hypot(targetPlayer.x - info.x, targetPlayer.y - info.y);
+            if (dist > 150) {
+                targetPlayer.x = info.x;
+                targetPlayer.y = info.y;
             }
         }
     });
@@ -2524,6 +2530,17 @@ function gameLoop(timestamp) {
         player1.update(dt, player2);
         player2.update(dt, player1);
         
+        // Apply Linear Interpolation (Lerp) for the network opponent to prevent teleporting
+        if (socket && myRole) {
+            let opponentP = myRole === 'Player1' ? player2 : player1;
+            if (opponentP && opponentP.targetX !== undefined) {
+                // Smooth interpolation factor (15% per frame equivalent, adjusted by dt)
+                const lerpFactor = 1 - Math.pow(1 - 0.15, dt);
+                opponentP.x = opponentP.x + (opponentP.targetX - opponentP.x) * lerpFactor;
+                opponentP.y = opponentP.y + (opponentP.targetY - opponentP.y) * lerpFactor;
+            }
+        }
+        
         // Simple Player-Player push collision (prevent overlapping completely)
         checkPlayerOverlapCollision();
     }
@@ -2552,8 +2569,10 @@ function gameLoop(timestamp) {
     // 7. Update camera shake timer
     updateCameraShake(dt);
 
-    // 8. Sync state with server periodically
-    if (globalFrameCount % 10 === 0 && socket && myRole) {
+    // 8. Sync state with server periodically (30Hz)
+    const now = performance.now();
+    if (now - lastStateEmitTime >= 33.3 && socket && myRole) {
+        lastStateEmitTime = now;
         let myP = myRole === 'Player1' ? player1 : player2;
         if (myP) {
             socket.emit('playerStateUpdate', {
