@@ -108,6 +108,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('returnToLobby', () => {
+        if (players[socket.id]) {
+            players[socket.id].isReady = false;
+            io.emit('playerReadyState', { id: socket.id, role: players[socket.id].role, isReady: false });
+        }
+        socket.broadcast.emit('opponentReturnedToLobby');
+    });
+
     socket.on('playerStateUpdate', (state) => {
         if (players[socket.id]) {
             players[socket.id] = { ...players[socket.id], ...state };

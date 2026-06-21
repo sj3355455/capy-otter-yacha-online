@@ -103,6 +103,18 @@ function initSocket() {
         }
     });
 
+    socket.on('opponentReturnedToLobby', () => {
+        returnToLobby();
+    });
+
+    socket.on('playerDisconnected', (id) => {
+        if (gameMode === 'online') {
+            returnToLobby();
+            document.getElementById('p1-ready-label').textContent = "";
+            document.getElementById('p2-ready-label').textContent = "";
+        }
+    });
+
     socket.on('opponentCharSelected', (data) => {
         if (data.role === 'Player1') {
             p1Selector.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
@@ -2534,10 +2546,19 @@ function gameLoop(timestamp) {
         if (socket && myRole) {
             let opponentP = myRole === 'Player1' ? player2 : player1;
             if (opponentP && opponentP.targetX !== undefined) {
-                // Smooth interpolation factor (15% per frame equivalent, adjusted by dt)
-                const lerpFactor = 1 - Math.pow(1 - 0.15, dt);
+                const prevX = opponentP.x;
+                const prevY = opponentP.y;
+                
+                // Smooth interpolation factor (20% per frame equivalent, adjusted by dt)
+                const lerpFactor = 1 - Math.pow(1 - 0.20, dt);
                 opponentP.x = opponentP.x + (opponentP.targetX - opponentP.x) * lerpFactor;
                 opponentP.y = opponentP.y + (opponentP.targetY - opponentP.y) * lerpFactor;
+                
+                // Back-calculate velocity to keep physics engine synchronized
+                if (dt > 0) {
+                    opponentP.vx = (opponentP.x - prevX) / dt;
+                    opponentP.vy = (opponentP.y - prevY) / dt;
+                }
             }
         }
         
@@ -3049,6 +3070,10 @@ function startGameLogic() {
         // Re-initialize players with chosen character types
         player1 = new Player(250, 250, 1, p1SelectedChar);
         player2 = new Player(720, 250, 2, p2SelectedChar);
+        player1.targetX = player1.x;
+        player1.targetY = player1.y;
+        player2.targetX = player2.x;
+        player2.targetY = player2.y;
         
         // Update CSS variables for players' colors/glow
         const container = document.getElementById('game-container');
@@ -3233,9 +3258,7 @@ selectCharBtn.addEventListener('click', () => {
 });
 
 // Back to Selection Screen Button Listener (In-Game)
-backToMenuBtn.addEventListener('click', () => {
-    backToMenuBtn.blur();
-    
+function returnToLobby() {
     // Hide HUD & back button, keep mute buttons active
     hud.classList.remove('active');
     backToMenuBtn.classList.remove('active');
@@ -3268,6 +3291,14 @@ backToMenuBtn.addEventListener('click', () => {
     document.getElementById('char-select-screen').classList.add('active');
     startOverlay.classList.add('active');
     gameoverOverlay.classList.remove('active');
+}
+
+backToMenuBtn.addEventListener('click', () => {
+    backToMenuBtn.blur();
+    if (gameMode === 'online' && socket) {
+        socket.emit('returnToLobby');
+    }
+    returnToLobby();
 });
 
 // Mute BGM Button Listener (In-Game)
