@@ -33,6 +33,70 @@ function initSocket() {
         }
     });
 
+    socket.on('roomState', (data) => {
+        if (data.map) {
+            const btn = document.querySelector(`.map-btn[data-map="${data.map}"]`);
+            if (btn) {
+                document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMap = data.map;
+                const wrapper = document.getElementById('canvas-wrapper');
+                const mapDesc = document.getElementById('map-desc');
+                if (selectedMap === 'colosseum') {
+                    if (wrapper) wrapper.style.backgroundImage = "url('image/map/colosseum_bg.png')";
+                    if (mapDesc) mapDesc.textContent = "Battle in the grand Roman Colosseum. Knock your opponent to the screen borders!";
+                } else if (selectedMap === 'dojo') {
+                    if (wrapper) wrapper.style.backgroundImage = "url('image/map/dojo.jpeg')";
+                    if (mapDesc) mapDesc.textContent = "Battle in the sparring arena. Knock your opponent to the screen borders!";
+                } else if (selectedMap === 'random') {
+                    if (wrapper) wrapper.style.backgroundImage = "linear-gradient(135deg, #151226 0%, #090812 100%)";
+                    if (mapDesc) mapDesc.textContent = "A random battlefield (Meadow, Colosseum, or Dojo) will be chosen once the fight starts!";
+                } else {
+                    if (wrapper) wrapper.style.backgroundImage = "url('image/map/meadow_bg.png')";
+                    if (mapDesc) mapDesc.textContent = "A peaceful meadow. Perfect for a friendly brawl.";
+                }
+            }
+        }
+        
+        for (let id in data.players) {
+            let pInfo = data.players[id];
+            if (pInfo.role === 'Player1') {
+                p1SelectedChar = pInfo.selectedChar;
+                p1Selector.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
+                const cbtn = p1Selector.querySelector(`.char-btn[data-char="${p1SelectedChar}"]`);
+                if(cbtn) cbtn.classList.add('active');
+                if (typeof drawPreview === 'function') drawPreview(1, p1SelectedChar);
+                document.getElementById('p1-ready-label').textContent = pInfo.isReady ? "READY!" : "";
+            } else if (pInfo.role === 'Player2') {
+                p2SelectedChar = pInfo.selectedChar;
+                p2Selector.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
+                const cbtn = p2Selector.querySelector(`.char-btn[data-char="${p2SelectedChar}"]`);
+                if(cbtn) cbtn.classList.add('active');
+                if (typeof drawPreview === 'function') drawPreview(2, p2SelectedChar);
+                document.getElementById('p2-ready-label').textContent = pInfo.isReady ? "READY!" : "";
+            }
+        }
+    });
+
+    socket.on('playerStateUpdate', (data) => {
+        if (!gameStarted || gameOver) return;
+        const info = data.playerInfo;
+        const targetPlayer = (info.role === 'Player1') ? player1 : player2;
+        if (!targetPlayer) return;
+        
+        if (info.role !== myRole) {
+            const dist = Math.hypot(targetPlayer.x - info.x, targetPlayer.y - info.y);
+            if (dist > 30) {
+                targetPlayer.x = info.x;
+                targetPlayer.y = info.y;
+            }
+            targetPlayer.hp = info.hp;
+            if (!targetPlayer.isAttacking && !targetPlayer.isDashing) {
+                targetPlayer.dir = info.dir;
+            }
+        }
+    });
+
     socket.on('opponentCharSelected', (data) => {
         if (data.role === 'Player1') {
             p1Selector.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('active'));
@@ -2487,6 +2551,20 @@ function gameLoop(timestamp) {
 
     // 7. Update camera shake timer
     updateCameraShake(dt);
+
+    // 8. Sync state with server periodically
+    if (globalFrameCount % 10 === 0 && socket && myRole) {
+        let myP = myRole === 'Player1' ? player1 : player2;
+        if (myP) {
+            socket.emit('playerStateUpdate', {
+                role: myRole,
+                x: myP.x,
+                y: myP.y,
+                hp: myP.hp,
+                dir: myP.dir
+            });
+        }
+    }
 
     requestAnimationFrame(gameLoop);
 }

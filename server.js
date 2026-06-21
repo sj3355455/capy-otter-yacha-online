@@ -14,6 +14,7 @@ app.use(express.static(__dirname));
 let players = {};
 let playerConnections = 0;
 let countdownTimer = null;
+let currentMap = 'meadow';
 
 function checkReadyAndStart() {
     const p1 = Object.values(players).find(p => p.role === 'Player1');
@@ -72,7 +73,7 @@ io.on('connection', (socket) => {
     };
 
     socket.emit('roleAssignment', role);
-    socket.emit('currentPlayers', players);
+    socket.emit('roomState', { players: players, map: currentMap });
     socket.broadcast.emit('newPlayer', { id: socket.id, playerInfo: players[socket.id] });
 
     socket.on('disconnect', () => {
@@ -95,6 +96,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('mapSelected', (mapName) => {
+        currentMap = mapName;
         socket.broadcast.emit('mapSelected', mapName);
     });
 
