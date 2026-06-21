@@ -137,6 +137,10 @@ io.on('connection', (socket) => {
     socket.on('keyPress', (data) => {
         socket.broadcast.emit('opponentKeyPress', data);
     });
+
+    socket.on('gameOverSync', (data) => {
+        socket.broadcast.emit('gameOverSync', data);
+    });
 });
 
 server.listen(PORT, () => {

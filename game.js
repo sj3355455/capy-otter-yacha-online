@@ -252,6 +252,15 @@ function initSocket() {
     socket.on('opponentKeyPress', (data) => {
         keys[data.key] = data.state;
     });
+
+    socket.on('gameOverSync', (data) => {
+        if (!gameStarted) return;
+        if (!gameOver) {
+            gameOver = true;
+            winnerId = data.winnerId;
+            showGameOverOverlay(winnerId);
+        }
+    });
 }
 
 
@@ -2774,6 +2783,11 @@ function checkGameOver() {
         } else if (p2Dead) {
             winnerId = 1; // P1 Wins
             showGameOverOverlay(1);
+        }
+        
+        // Broadcast game over to ensure both clients end the match with the same result
+        if (gameMode === 'online' && socket && myRole) {
+            socket.emit('gameOverSync', { winnerId: winnerId });
         }
     }
 }
