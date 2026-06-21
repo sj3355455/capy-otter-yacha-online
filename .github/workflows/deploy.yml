@@ -12,12 +12,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # itch.io 공식 인증 배포 로봇을 사용하여 주소 및 오타 문제를 완벽 차단합니다.
-      - name: Deploy to itch.io via Butler
-        uses: josephbmanley/butler-publish-action@v1.0.3
+      - name: Prepare HTML5 Files
+        run: |
+          mkdir -p dist
+          # 프론트엔드 파일만 안전하게 복사 (파일/폴더가 없어도 멈추지 않음)
+          cp index.html dist/ 2>/dev/null || true
+          cp *.js dist/ 2>/dev/null || true
+          cp *.css dist/ 2>/dev/null || true
+          cp -r image dist/ 2>/dev/null || true
+          cp -r sound dist/ 2>/dev/null || true
+
+      - name: Download Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          
+      - name: Push to itch.io
         env:
-          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
-          CHANNEL: html5
-          ITCH_GAME: capysudal-yacha-online
-          ITCH_USER: sole0914
-          PACKAGE: .
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+        run: |
+          ./butler push dist sole0914/capysudal-yacha-online:html5
