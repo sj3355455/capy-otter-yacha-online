@@ -83,6 +83,10 @@ function initSocket() {
             document.getElementById('p2-panel-title').textContent = 'PLAYER 2 (OTTER)';
             document.getElementById('p2-preview-label').textContent = 'PLAYER 2';
         }
+        
+        if (gameMode === 'online') {
+            enterCharSelectScreen();
+        }
     });
 
     socket.on('roomState', (data) => {
@@ -2797,7 +2801,6 @@ if (onlineStartBtn) {
         gameMode = 'online';
         document.getElementById('difficulty-select-container').style.display = 'none';
         initSocket();
-        enterCharSelectScreen();
     });
 }
 
