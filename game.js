@@ -34,7 +34,7 @@ function initSocket() {
     const urlInput = document.getElementById('server-url-input');
     
     if (!isLocal) {
-        serverUrl = (urlInput && urlInput.value.trim()) || localStorage.getItem('capy_server_url') || DEFAULT_SERVER_URL;
+        serverUrl = (urlInput && urlInput.value.trim()) || DEFAULT_SERVER_URL;
     }
     
     if (statusLbl) {
@@ -78,6 +78,7 @@ function initSocket() {
                     const geckos = geckosModule.default;
                     const urlObj = new URL(serverUrl);
                     const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
+                    console.log("Geckos Client attempts connection to Host:", geckosHost, "Port: 9208");
                     geckosChannel = geckos({ 
                         url: geckosHost, 
                         port: 9208,
