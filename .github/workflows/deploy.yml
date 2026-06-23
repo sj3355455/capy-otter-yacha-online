@@ -32,4 +32,4 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
-          ./linux-amd64/butler push dist sole0914/capysudal-yacha-online:html5
+          ./linux-amd64/butler push dist sole0914/capy-otter-yacha:html5
