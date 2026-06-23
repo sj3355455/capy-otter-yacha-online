@@ -5,7 +5,7 @@ ctx.imageSmoothingEnabled = true; // Enable anti-aliasing for smoother visuals
 ctx.imageSmoothingQuality = 'high'; // Use high quality smoothing for clean downscaling
 
 // Multiplayer Socket setup
-const DEFAULT_SERVER_URL = 'http://13.125.232.20:3000';
+const DEFAULT_SERVER_URL = 'https://13-125-232-20.sslip.io';
 let socket = null;
 let geckosChannel = null;
 let isUdpConnected = false;
