@@ -78,7 +78,17 @@ function initSocket() {
                     const geckos = geckosModule.default;
                     const urlObj = new URL(serverUrl);
                     const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
-                    geckosChannel = geckos({ url: geckosHost, port: 9208 });
+                    geckosChannel = geckos({ 
+                        url: geckosHost, 
+                        port: 9208,
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                            { urls: 'stun:stun2.l.google.com:19302' },
+                            { urls: 'stun:stun3.l.google.com:19302' },
+                            { urls: 'stun:stun4.l.google.com:19302' }
+                        ]
+                    });
                     
                     geckosChannel.onConnect(error => {
                         if (error) {
