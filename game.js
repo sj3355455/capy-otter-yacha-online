@@ -5,8 +5,18 @@ ctx.imageSmoothingEnabled = true; // Enable anti-aliasing for smoother visuals
 ctx.imageSmoothingQuality = 'high'; // Use high quality smoothing for clean downscaling
 
 // Multiplayer Socket setup
-const DEFAULT_SERVER_URL = 'https://capy-otter-yacha.onrender.com';
+const DEFAULT_SERVER_URL = 'http://13.125.232.20:3000';
 let socket = null;
+let geckosChannel = null;
+let isUdpConnected = false;
+
+function sendHybridUpdate(event, data) {
+    if (gameMode === 'online') {
+        if (isUdpConnected && geckosChannel) {
+            geckosChannel.emit(event, data);
+        }
+    }
+}
 let myRole = 'Spectator';
 let isReady = false;
 
@@ -61,7 +71,68 @@ function initSocket() {
                 onlineStartBtn.disabled = false;
             }
         }
+
+        if (!geckosChannel) {
+            import('https://esm.sh/@geckos.io/client@3.1.0')
+                .then(geckosModule => {
+                    const geckos = geckosModule.default;
+                    const urlObj = new URL(serverUrl);
+                    const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
+                    geckosChannel = geckos({ url: geckosHost, port: 9208 });
+                    
+                    geckosChannel.onConnect(error => {
+                        if (error) {
+                            console.error("Geckos connection error:", error);
+                            return;
+                        }
+                        console.log("Geckos UDP connected!");
+                        geckosChannel.emit('auth', { socketId: socket.id });
+                        
+                        geckosChannel.on('authSuccess', () => {
+                            isUdpConnected = true;
+                            console.log("Geckos UDP authenticated.");
+                        });
+                        
+                        geckosChannel.on('playerMoved', handlePlayerMoved);
+                        geckosChannel.on('opponentKeyPress', handleOpponentKeyPress);
+                    });
+                    
+                    geckosChannel.onDisconnect(() => {
+                        isUdpConnected = false;
+                        console.log("Geckos UDP disconnected.");
+                        geckosChannel = null;
+                    });
+                })
+                .catch(err => console.error("Failed to load Geckos module:", err));
+        }
     });
+
+    const handlePlayerMoved = (data) => {
+        if (!gameStarted || gameOver) return;
+        const info = data.playerInfo;
+        const targetPlayer = (info.role === 'Player1') ? player1 : player2;
+        if (!targetPlayer) return;
+        
+        if (info.role !== myRole) {
+            if (!targetPlayer.positionBuffer) {
+                targetPlayer.positionBuffer = [];
+            }
+            targetPlayer.positionBuffer.push({
+                x: info.x,
+                y: info.y,
+                dir: info.dir,
+                time: performance.now()
+            });
+            if (targetPlayer.positionBuffer.length > 20) {
+                targetPlayer.positionBuffer.shift();
+            }
+            targetPlayer.hp = info.hp;
+        }
+    };
+
+    const handleOpponentKeyPress = (data) => {
+        keys[data.key] = data.state;
+    };
 
     socket.on('connect_error', (error) => {
         console.error('Socket connection error:', error);
@@ -183,7 +254,7 @@ function initSocket() {
                     if (wrapper) wrapper.style.backgroundImage = "linear-gradient(135deg, #151226 0%, #090812 100%)";
                     if (mapDesc) mapDesc.textContent = "A random battlefield (Meadow, Colosseum, or Dojo) will be chosen once the fight starts!";
                 } else {
-                    if (wrapper) wrapper.style.backgroundImage = "url('image/map/meadow_bg.png')";
+                    if (wrapper) wrapper.style.backgroundImage = "url('image/map/meadow_bg_v4.png')";
                     if (mapDesc) mapDesc.textContent = "A peaceful meadow. Perfect for a friendly brawl.";
                 }
             }
@@ -206,35 +277,6 @@ function initSocket() {
                 if (typeof drawPreview === 'function') drawPreview(2, p2SelectedChar);
                 document.getElementById('p2-ready-label').textContent = pInfo.isReady ? "READY!" : "";
             }
-        }
-    });
-
-    socket.on('playerMoved', (data) => {
-        if (!gameStarted || gameOver) return;
-        const info = data.playerInfo;
-        const targetPlayer = (info.role === 'Player1') ? player1 : player2;
-        if (!targetPlayer) return;
-        
-        if (info.role !== myRole) {
-            // Initialize position buffer if not exists
-            if (!targetPlayer.positionBuffer) {
-                targetPlayer.positionBuffer = [];
-            }
-            
-            // Push incoming state with local timestamp to history buffer
-            targetPlayer.positionBuffer.push({
-                x: info.x,
-                y: info.y,
-                dir: info.dir,
-                time: performance.now()
-            });
-            
-            // Keep buffer size manageable (last 20 frames is plenty for ~333ms at 60Hz)
-            if (targetPlayer.positionBuffer.length > 20) {
-                targetPlayer.positionBuffer.shift();
-            }
-            
-            targetPlayer.hp = info.hp;
         }
     });
 
@@ -325,10 +367,6 @@ function initSocket() {
                 if (mapDesc) mapDesc.textContent = "Battle in the lush green fields. Knock your opponent to the screen borders!";
             }
         }
-    });
-
-    socket.on('opponentKeyPress', (data) => {
-        keys[data.key] = data.state;
     });
 
     socket.on('gameOverSync', (data) => {
@@ -582,7 +620,7 @@ window.addEventListener('keydown', (e) => {
     if (gameMode !== 'online' || (myRole === 'Player1' && isP1Key) || (myRole === 'Player2' && isP2Key)) {
         if (key in keys && !keys[key]) {
             keys[key] = true;
-            if (socket && gameMode === 'online') socket.emit('keyPress', { key: key, state: true });
+            if (gameMode === 'online') sendHybridUpdate('keyPress', { key: key, state: true });
         }
     }
     
@@ -608,7 +646,7 @@ window.addEventListener('keyup', (e) => {
     if (gameMode !== 'online' || (myRole === 'Player1' && isP1Key) || (myRole === 'Player2' && isP2Key)) {
         if (key in keys && keys[key]) {
             keys[key] = false;
-            if (socket && gameMode === 'online') socket.emit('keyPress', { key: key, state: false });
+            if (gameMode === 'online') sendHybridUpdate('keyPress', { key: key, state: false });
         }
     }
 });
@@ -2828,11 +2866,11 @@ function gameLoop(timestamp) {
 
     // 8. Sync state with server periodically (60Hz)
     const now = performance.now();
-    if (now - lastStateEmitTime >= 16.6 && socket && myRole) {
+    if (now - lastStateEmitTime >= 16.6 && (socket || geckosChannel) && myRole) {
         lastStateEmitTime = now;
         let myP = myRole === 'Player1' ? player1 : player2;
         if (myP) {
-            socket.emit('playerStateUpdate', {
+            sendHybridUpdate('playerStateUpdate', {
                 role: myRole,
                 x: myP.x,
                 y: myP.y,

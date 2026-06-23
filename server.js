@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const { geckos } = require('@geckos.io/server');
 const path = require('path');
 
 const app = express();
@@ -18,26 +19,68 @@ const io = new Server(server, {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+// Geckos UDP Server
+const ioUdp = geckos({
+    cors: { origin: '*', allowAuthorization: true }
+});
 
+const HTTP_PORT = process.env.PORT || 3000;
+const UDP_PORT = process.env.UDP_PORT || 9208; // 배포 시 process.env.UDP_PORT = 443 설정 가능
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.use(express.static(__dirname));
 
 let rooms = {}; // key: roomId, value: { id, name, password, players: {}, countdownTimer, currentMap }
 let playerConnections = 0;
+
+// 하이브리드 통신을 위한 매핑 맵
+let geckosChannelsBySocketId = {}; // key: socketId, value: geckos channel
+let socketIdByGeckosId = {};       // key: geckosId, value: socketId
+let roomIdBySocketId = {};         // key: socketId, value: roomId
 
 function generateRoomId() {
     return Math.random().toString(36).substring(2, 9);
 }
 
 function broadcastRoomList() {
-    // Send a safe version of rooms (without passwords) to everyone in the lobby
     const roomList = Object.values(rooms).map(room => ({
         id: room.id,
         name: room.name,
         hasPassword: !!room.password,
         playerCount: Object.keys(room.players).length
     }));
-    io.emit('roomListUpdate', roomList); // Send to all connected sockets
+    io.emit('roomListUpdate', roomList);
+}
+
+// 특정 방의 다른 유저들에게 데이터를 보냅니다. (무조건 UDP로만 전송)
+function broadcastToRoom(roomId, event, payload, senderSocketId) {
+    const room = rooms[roomId];
+    if (!room) return;
+    
+    Object.keys(room.players).forEach(targetSocketId => {
+        if (targetSocketId === senderSocketId) return; // 본인 제외
+        
+        const targetGeckos = geckosChannelsBySocketId[targetSocketId];
+        if (targetGeckos) {
+            targetGeckos.emit(event, payload);
+        }
+    });
+}
+
+function handlePlayerStateUpdate(socketId, state) {
+    const roomId = roomIdBySocketId[socketId];
+    if (!roomId) return;
+    const room = rooms[roomId];
+    if (room && room.players[socketId]) {
+        room.players[socketId] = { ...room.players[socketId], ...state };
+        broadcastToRoom(roomId, 'playerMoved', { id: socketId, playerInfo: room.players[socketId] }, socketId);
+    }
+}
+
+function handleKeyPress(socketId, data) {
+    const roomId = roomIdBySocketId[socketId];
+    if (!roomId) return;
+    broadcastToRoom(roomId, 'opponentKeyPress', data, socketId);
 }
 
 function checkReadyAndStart(roomId) {
@@ -58,13 +101,12 @@ function checkReadyAndStart(roomId) {
                 } else {
                     clearInterval(room.countdownTimer);
                     room.countdownTimer = null;
-                    // Reset ready states for next time
                     p1.isReady = false;
                     p2.isReady = false;
                     
                     const randomIndices = {
-                        map: Math.floor(Math.random() * 3), // meadow, colosseum, dojo
-                        p1: Math.floor(Math.random() * 4), // capy, otter, owl, quokka
+                        map: Math.floor(Math.random() * 3), 
+                        p1: Math.floor(Math.random() * 4),
                         p2: Math.floor(Math.random() * 4)
                     };
                     io.to(roomId).emit('startGame', { players: room.players, randomIndices });
@@ -80,12 +122,43 @@ function checkReadyAndStart(roomId) {
     }
 }
 
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
-    playerConnections++;
-    socket.roomId = null;
+// UDP (Geckos.io) 서버 이벤트 처리
+ioUdp.onConnection(channel => {
+    channel.onDisconnect(() => {
+        const sid = socketIdByGeckosId[channel.id];
+        if (sid) {
+            delete geckosChannelsBySocketId[sid];
+            delete socketIdByGeckosId[channel.id];
+        }
+    });
 
-    // Send initial room list to the newly connected user
+    channel.on('auth', data => {
+        const { socketId } = data;
+        if (socketId) {
+            geckosChannelsBySocketId[socketId] = channel;
+            socketIdByGeckosId[channel.id] = socketId;
+            // 클라이언트 측에 UDP 연결 완료 신호 (핑백)
+            channel.emit('authSuccess', { message: 'UDP Connected' });
+        }
+    });
+    
+    // 빈번한 데이터(이동, 키입력)는 UDP 채널로 수신 시 여기로 들어옴
+    channel.on('playerStateUpdate', (state) => {
+        const sid = socketIdByGeckosId[channel.id];
+        if (sid) handlePlayerStateUpdate(sid, state);
+    });
+
+    channel.on('keyPress', (data) => {
+        const sid = socketIdByGeckosId[channel.id];
+        if (sid) handleKeyPress(sid, data);
+    });
+});
+
+// TCP (Socket.io) 서버 이벤트 처리
+io.on('connection', (socket) => {
+    console.log('A user connected via TCP:', socket.id);
+    playerConnections++;
+
     socket.emit('roomListUpdate', Object.values(rooms).map(room => ({
         id: room.id,
         name: room.name,
@@ -94,7 +167,7 @@ io.on('connection', (socket) => {
     })));
 
     socket.on('createRoom', (data) => {
-        if (socket.roomId) return; // Already in a room
+        if (roomIdBySocketId[socket.id]) return;
         
         const roomId = generateRoomId();
         const roomName = data.name || `Room ${roomId}`;
@@ -109,7 +182,6 @@ io.on('connection', (socket) => {
             currentMap: 'meadow'
         };
 
-        // Creator becomes Player1
         rooms[roomId].players[socket.id] = {
             role: 'Player1',
             x: 250,
@@ -118,7 +190,7 @@ io.on('connection', (socket) => {
             isReady: false
         };
 
-        socket.roomId = roomId;
+        roomIdBySocketId[socket.id] = roomId;
         socket.join(roomId);
         
         socket.emit('roomJoined', { roomId, role: 'Player1', map: rooms[roomId].currentMap });
@@ -126,7 +198,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('joinRoom', (data) => {
-        if (socket.roomId) return; // Already in a room
+        if (roomIdBySocketId[socket.id]) return;
 
         const { roomId, password } = data;
         const room = rooms[roomId];
@@ -147,7 +219,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Determine role
         let role = 'Spectator';
         if (Object.values(room.players).filter(p => p.role === 'Player1').length === 0) {
             role = 'Player1';
@@ -163,21 +234,19 @@ io.on('connection', (socket) => {
             isReady: false
         };
 
-        socket.roomId = roomId;
+        roomIdBySocketId[socket.id] = roomId;
         socket.join(roomId);
 
         socket.emit('roomJoined', { roomId, role: role, map: room.currentMap });
-        // Send state of already existing players to the new player
         socket.emit('roomState', { players: room.players, map: room.currentMap });
-        // Broadcast new player to others in the room
         socket.to(roomId).emit('newPlayer', { id: socket.id, playerInfo: room.players[socket.id] });
         
         broadcastRoomList();
     });
 
     socket.on('leaveRoom', () => {
-        if (!socket.roomId) return;
-        const roomId = socket.roomId;
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
         const room = rooms[roomId];
 
         if (room) {
@@ -185,27 +254,25 @@ io.on('connection', (socket) => {
             socket.leave(roomId);
             socket.to(roomId).emit('playerDisconnected', socket.id);
 
-            // Cancel countdown if any
             if (room.countdownTimer) {
                 clearInterval(room.countdownTimer);
                 room.countdownTimer = null;
                 io.to(roomId).emit('countdownCancelled');
             }
 
-            // If room is empty, delete it
             if (Object.keys(room.players).length === 0) {
                 delete rooms[roomId];
             }
             broadcastRoomList();
         }
-        socket.roomId = null;
+        delete roomIdBySocketId[socket.id];
     });
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
         playerConnections--;
-        if (socket.roomId) {
-            const roomId = socket.roomId;
+        const roomId = roomIdBySocketId[socket.id];
+        if (roomId) {
             const room = rooms[roomId];
             if (room) {
                 delete room.players[socket.id];
@@ -220,67 +287,64 @@ io.on('connection', (socket) => {
                 }
                 broadcastRoomList();
             }
+            delete roomIdBySocketId[socket.id];
         }
     });
 
     socket.on('charSelected', (charName) => {
-        if (!socket.roomId) return;
-        const room = rooms[socket.roomId];
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
+        const room = rooms[roomId];
         if (room && room.players[socket.id]) {
             room.players[socket.id].selectedChar = charName;
-            socket.to(socket.roomId).emit('opponentCharSelected', { id: socket.id, role: room.players[socket.id].role, charName });
+            socket.to(roomId).emit('opponentCharSelected', { id: socket.id, role: room.players[socket.id].role, charName });
         }
     });
 
     socket.on('mapSelected', (mapName) => {
-        if (!socket.roomId) return;
-        const room = rooms[socket.roomId];
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
+        const room = rooms[roomId];
         if (room) {
             room.currentMap = mapName;
-            socket.to(socket.roomId).emit('mapSelected', mapName);
+            socket.to(roomId).emit('mapSelected', mapName);
         }
     });
 
     socket.on('playerReady', (isReady) => {
-        if (!socket.roomId) return;
-        const room = rooms[socket.roomId];
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
+        const room = rooms[roomId];
         if (room && room.players[socket.id]) {
             room.players[socket.id].isReady = isReady;
-            io.to(socket.roomId).emit('playerReadyState', { id: socket.id, role: room.players[socket.id].role, isReady });
-            checkReadyAndStart(socket.roomId);
+            io.to(roomId).emit('playerReadyState', { id: socket.id, role: room.players[socket.id].role, isReady });
+            checkReadyAndStart(roomId);
         }
     });
 
     socket.on('returnToLobby', () => {
-        if (!socket.roomId) return;
-        const room = rooms[socket.roomId];
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
+        const room = rooms[roomId];
         if (room && room.players[socket.id]) {
             room.players[socket.id].isReady = false;
-            io.to(socket.roomId).emit('playerReadyState', { id: socket.id, role: room.players[socket.id].role, isReady: false });
+            io.to(roomId).emit('playerReadyState', { id: socket.id, role: room.players[socket.id].role, isReady: false });
         }
-        socket.to(socket.roomId).emit('opponentReturnedToLobby');
+        socket.to(roomId).emit('opponentReturnedToLobby');
     });
 
-    socket.on('playerStateUpdate', (state) => {
-        if (!socket.roomId) return;
-        const room = rooms[socket.roomId];
-        if (room && room.players[socket.id]) {
-            room.players[socket.id] = { ...room.players[socket.id], ...state };
-            socket.to(socket.roomId).emit('playerMoved', { id: socket.id, playerInfo: room.players[socket.id] });
-        }
-    });
 
-    socket.on('keyPress', (data) => {
-        if (!socket.roomId) return;
-        socket.to(socket.roomId).emit('opponentKeyPress', data);
-    });
 
     socket.on('gameOverSync', (data) => {
-        if (!socket.roomId) return;
-        socket.to(socket.roomId).emit('gameOverSync', data);
+        const roomId = roomIdBySocketId[socket.id];
+        if (!roomId) return;
+        socket.to(roomId).emit('gameOverSync', data); // 게임오버 같은 중요한 이벤트는 TCP로만 처리
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+server.listen(HTTP_PORT, () => {
+    console.log(`[TCP] HTTP & Socket.io Server is running on http://localhost:${HTTP_PORT}`);
 });
+
+ioUdp.listen(UDP_PORT);
+console.log(`[UDP] Geckos.io WebRTC Server is running on port ${UDP_PORT}`);
