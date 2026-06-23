@@ -136,17 +136,10 @@ function initSocket() {
         if (!targetPlayer) return;
         
         if (info.role !== myRole) {
-            if (!targetPlayer.positionBuffer) {
-                targetPlayer.positionBuffer = [];
-            }
-            targetPlayer.positionBuffer.push({
-                x: info.x,
-                y: info.y,
-                dir: info.dir,
-                time: performance.now()
-            });
-            if (targetPlayer.positionBuffer.length > 20) {
-                targetPlayer.positionBuffer.shift();
+            targetPlayer.lastNetworkX = info.x;
+            targetPlayer.lastNetworkY = info.y;
+            if (!targetPlayer.isAttacking && !targetPlayer.isDashing) {
+                targetPlayer.dir = info.dir;
             }
             targetPlayer.hp = info.hp;
         }
@@ -2800,60 +2793,20 @@ function gameLoop(timestamp) {
         player1.update(dt, player2);
         player2.update(dt, player1);
         
-        // Apply Entity Interpolation (Jitter Buffer) for network opponent to ensure perfectly smooth movement
+        // Softly interpolate network opponent position to resolve drift/desync smoothly
         if (socket && myRole) {
             let opponentP = myRole === 'Player1' ? player2 : player1;
-            if (opponentP && opponentP.positionBuffer && opponentP.positionBuffer.length > 0) {
-                const prevX = opponentP.x;
-                const prevY = opponentP.y;
-                
-                // 45ms jitter buffer (approx 2.5 frames at 60Hz tick rate)
-                const renderTime = performance.now() - 45;
-                
-                let pastState = null;
-                let futureState = null;
-                
-                // Find bounding states
-                for (let i = opponentP.positionBuffer.length - 1; i >= 0; i--) {
-                    if (opponentP.positionBuffer[i].time <= renderTime) {
-                        pastState = opponentP.positionBuffer[i];
-                        if (i + 1 < opponentP.positionBuffer.length) {
-                            futureState = opponentP.positionBuffer[i + 1];
-                        }
-                        break;
-                    }
-                }
-                
-                if (pastState && futureState) {
-                    // Interpolate between past and future
-                    const t = (renderTime - pastState.time) / (futureState.time - pastState.time);
-                    opponentP.x = pastState.x + (futureState.x - pastState.x) * t;
-                    opponentP.y = pastState.y + (futureState.y - pastState.y) * t;
-                    
-                    if (!opponentP.isAttacking && !opponentP.isDashing) {
-                        opponentP.dir = pastState.dir;
-                    }
-                } else if (pastState) {
-                    // Render time is newer than anything we have (starvation)
-                    opponentP.x = pastState.x;
-                    opponentP.y = pastState.y;
-                    if (!opponentP.isAttacking && !opponentP.isDashing) {
-                        opponentP.dir = pastState.dir;
-                    }
+            if (opponentP && opponentP.lastNetworkX !== undefined) {
+                // If the distance is extremely large (e.g. teleporting or loading), snap instantly
+                const dist = Math.hypot(opponentP.x - opponentP.lastNetworkX, opponentP.y - opponentP.lastNetworkY);
+                if (dist > 150) {
+                    opponentP.x = opponentP.lastNetworkX;
+                    opponentP.y = opponentP.lastNetworkY;
                 } else {
-                    // Render time is older than the oldest state (happens at very start)
-                    const oldestState = opponentP.positionBuffer[0];
-                    opponentP.x = oldestState.x;
-                    opponentP.y = oldestState.y;
-                    if (!opponentP.isAttacking && !opponentP.isDashing) {
-                        opponentP.dir = oldestState.dir;
-                    }
-                }
-                
-                // Back-calculate velocity to keep physics engine/animation logic synchronized
-                if (dt > 0) {
-                    opponentP.vx = (opponentP.x - prevX) / dt;
-                    opponentP.vy = (opponentP.y - prevY) / dt;
+                    // Scale the 15% (0.15) lerp factor by dt to remain independent of framerate
+                    const lerpFactor = Math.min(1, 0.15 * (dt || 1));
+                    opponentP.x = opponentP.x + (opponentP.lastNetworkX - opponentP.x) * lerpFactor;
+                    opponentP.y = opponentP.y + (opponentP.lastNetworkY - opponentP.y) * lerpFactor;
                 }
             }
         }
