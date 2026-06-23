@@ -22,6 +22,7 @@ const io = new Server(server, {
 // Geckos UDP Server with STUN configuration for NAT traversal
 const ioUdp = geckos({
     cors: { origin: '*', allowAuthorization: true },
+    portRange: { min: 9208, max: 9208 },
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
@@ -353,5 +354,5 @@ server.listen(HTTP_PORT, () => {
     console.log(`[TCP] HTTP & Socket.io Server is running on http://localhost:${HTTP_PORT}`);
 });
 
-ioUdp.listen(UDP_PORT);
-console.log(`[UDP] Geckos.io WebRTC Server is running on port ${UDP_PORT}`);
+ioUdp.addServer(server);
+console.log(`[UDP] Geckos.io WebRTC Server attached to HTTP server. Using UDP port 9208 for data channels.`);

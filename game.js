@@ -82,11 +82,12 @@ function initSocket() {
                         
                         const urlObj = new URL(serverUrl);
                         const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
-                        console.log("Geckos Client: Target Host is:", geckosHost, "Port: 9208");
+                        const geckosPort = urlObj.port ? parseInt(urlObj.port) : (urlObj.protocol === 'https:' ? 443 : 80);
+                        console.log("Geckos Client: Target Host is:", geckosHost, "Port:", geckosPort);
                         
                         geckosChannel = geckos({ 
                             url: geckosHost, 
-                            port: 9208,
+                            port: geckosPort,
                             iceServers: [
                                 { urls: 'stun:stun.l.google.com:19302' },
                                 { urls: 'stun:stun1.l.google.com:19302' },
