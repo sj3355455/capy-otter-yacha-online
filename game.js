@@ -71,48 +71,58 @@ function initSocket() {
                 onlineStartBtn.disabled = false;
             }
         }
-
         if (!geckosChannel) {
+            console.log("Geckos Client: Starting dynamic import from esm.sh...");
             import('https://esm.sh/@geckos.io/client@3.1.0')
                 .then(geckosModule => {
-                    const geckos = geckosModule.default;
-                    const urlObj = new URL(serverUrl);
-                    const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
-                    console.log("Geckos Client attempts connection to Host:", geckosHost, "Port: 9208");
-                    geckosChannel = geckos({ 
-                        url: geckosHost, 
-                        port: 9208,
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun2.l.google.com:19302' },
-                            { urls: 'stun:stun3.l.google.com:19302' },
-                            { urls: 'stun:stun4.l.google.com:19302' }
-                        ]
-                    });
-                    
-                    geckosChannel.onConnect(error => {
-                        if (error) {
-                            console.error("Geckos connection error:", error);
-                            return;
-                        }
-                        console.log("Geckos UDP connected!");
-                        geckosChannel.emit('auth', { socketId: socket.id });
+                    console.log("Geckos Client: Module loaded successfully.", geckosModule);
+                    try {
+                        const geckos = geckosModule.default;
+                        console.log("Geckos Client: 'geckos' function type is:", typeof geckos);
                         
-                        geckosChannel.on('authSuccess', () => {
-                            isUdpConnected = true;
-                            console.log("Geckos UDP authenticated.");
+                        const urlObj = new URL(serverUrl);
+                        const geckosHost = urlObj.protocol + '//' + urlObj.hostname;
+                        console.log("Geckos Client: Target Host is:", geckosHost, "Port: 9208");
+                        
+                        geckosChannel = geckos({ 
+                            url: geckosHost, 
+                            port: 9208,
+                            iceServers: [
+                                { urls: 'stun:stun.l.google.com:19302' },
+                                { urls: 'stun:stun1.l.google.com:19302' },
+                                { urls: 'stun:stun2.l.google.com:19302' },
+                                { urls: 'stun:stun3.l.google.com:19302' },
+                                { urls: 'stun:stun4.l.google.com:19302' }
+                            ]
+                        });
+                        console.log("Geckos Client: Channel instance created.", geckosChannel);
+                        
+                        geckosChannel.onConnect(error => {
+                            console.log("Geckos Client: onConnect callback triggered. Error status:", error);
+                            if (error) {
+                                console.error("Geckos connection error in callback:", error);
+                                return;
+                            }
+                            console.log("Geckos UDP connected!");
+                            geckosChannel.emit('auth', { socketId: socket.id });
+                            
+                            geckosChannel.on('authSuccess', () => {
+                                isUdpConnected = true;
+                                console.log("Geckos UDP authenticated.");
+                            });
+                            
+                            geckosChannel.on('playerMoved', handlePlayerMoved);
+                            geckosChannel.on('opponentKeyPress', handleOpponentKeyPress);
                         });
                         
-                        geckosChannel.on('playerMoved', handlePlayerMoved);
-                        geckosChannel.on('opponentKeyPress', handleOpponentKeyPress);
-                    });
-                    
-                    geckosChannel.onDisconnect(() => {
-                        isUdpConnected = false;
-                        console.log("Geckos UDP disconnected.");
-                        geckosChannel = null;
-                    });
+                        geckosChannel.onDisconnect(() => {
+                            isUdpConnected = false;
+                            console.log("Geckos UDP disconnected.");
+                            geckosChannel = null;
+                        });
+                    } catch (e) {
+                        console.error("Geckos Client: Synchronous error in setup:", e);
+                    }
                 })
                 .catch(err => console.error("Failed to load Geckos module:", err));
         }
