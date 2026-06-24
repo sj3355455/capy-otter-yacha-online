@@ -2714,22 +2714,32 @@ const p2HpText = document.getElementById('p2-hp-text');
 const p2CooldownOverlay = document.getElementById('p2-cooldown-overlay');
 const p2CooldownBar = document.getElementById('p2-cooldown-bar');
 
-function updateHUD() {
-    // 1P HP Bar
-    const p1HpPercent = (player1.hp / player1.maxHp) * 100;
-    p1HpBar.style.width = `${p1HpPercent}%`;
-    p1HpText.textContent = `${player1.hp} / ${player1.maxHp}`;
-    setTimeout(() => {
-        p1HpGhost.style.width = `${p1HpPercent}%`;
-    }, 200);
+// HUD DOM update cache to prevent layout thrashing
+let hudCache = {
+    p1Hp: -1,
+    p2Hp: -1,
+    p1Special: -1,
+    p2Special: -1
+};
 
-    // 2P HP Bar
-    const p2HpPercent = (player2.hp / player2.maxHp) * 100;
-    p2HpBar.style.width = `${p2HpPercent}%`;
-    p2HpText.textContent = `${player2.hp} / ${player2.maxHp}`;
-    setTimeout(() => {
-        p2HpGhost.style.width = `${p2HpPercent}%`;
-    }, 200);
+function updateHUD() {
+    // 1P HP Bar - update only on value change
+    if (player1.hp !== hudCache.p1Hp) {
+        const p1HpPercent = (player1.hp / player1.maxHp) * 100;
+        p1HpBar.style.width = `${p1HpPercent}%`;
+        p1HpText.textContent = `${player1.hp} / ${player1.maxHp}`;
+        p1HpGhost.style.width = `${p1HpPercent}%`; // transition-delay in CSS handles the 200ms delay smoothly
+        hudCache.p1Hp = player1.hp;
+    }
+
+    // 2P HP Bar - update only on value change
+    if (player2.hp !== hudCache.p2Hp) {
+        const p2HpPercent = (player2.hp / player2.maxHp) * 100;
+        p2HpBar.style.width = `${p2HpPercent}%`;
+        p2HpText.textContent = `${player2.hp} / ${player2.maxHp}`;
+        p2HpGhost.style.width = `${p2HpPercent}%`; // transition-delay in CSS handles the 200ms delay smoothly
+        hudCache.p2Hp = player2.hp;
+    }
 
     // 1P Special Cooldown (G)
     let p1SpecialPercent;
@@ -2742,8 +2752,13 @@ function updateHUD() {
     } else {
         p1SpecialPercent = (player1.specialCooldown / player1.specialMaxCooldown) * 100;
     }
-    p1CooldownOverlay.style.height = `${p1SpecialPercent}%`;
-    p1CooldownBar.style.width = `${100 - p1SpecialPercent}%`;
+    
+    // Update only on value change (tolerance threshold 0.01%)
+    if (Math.abs(p1SpecialPercent - hudCache.p1Special) > 0.01) {
+        p1CooldownOverlay.style.height = `${p1SpecialPercent}%`;
+        p1CooldownBar.style.width = `${100 - p1SpecialPercent}%`;
+        hudCache.p1Special = p1SpecialPercent;
+    }
 
     // 2P Special Cooldown (])
     let p2SpecialPercent;
@@ -2756,8 +2771,13 @@ function updateHUD() {
     } else {
         p2SpecialPercent = (player2.specialCooldown / player2.specialMaxCooldown) * 100;
     }
-    p2CooldownOverlay.style.height = `${p2SpecialPercent}%`;
-    p2CooldownBar.style.width = `${100 - p2SpecialPercent}%`;
+    
+    // Update only on value change (tolerance threshold 0.01%)
+    if (Math.abs(p2SpecialPercent - hudCache.p2Special) > 0.01) {
+        p2CooldownOverlay.style.height = `${p2SpecialPercent}%`;
+        p2CooldownBar.style.width = `${100 - p2SpecialPercent}%`;
+        hudCache.p2Special = p2SpecialPercent;
+    }
 }
 
 // --- Main Game Loop ---
