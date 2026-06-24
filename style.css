@@ -1099,57 +1099,48 @@ footer {
 /* D-Pad Container */
 #mobile-joystick {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 180px;
+    height: 80px;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 50%;
+    border-radius: 40px;
     pointer-events: auto;
     touch-action: none; /* Prevent scroll */
+    overflow: hidden;
 }
 
 /* D-Pad Buttons */
 .d-pad {
     position: absolute;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
+    width: 50%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
     transition: background 0.1s;
 }
-.d-pad.active { background: rgba(255, 255, 255, 0.6); }
+.d-pad.active { background: rgba(255, 255, 255, 0.4); }
 
-.d-pad.up { top: 10px; left: 50px; }
-.d-pad.down { bottom: 10px; left: 50px; }
-.d-pad.left { top: 50px; left: 10px; }
-.d-pad.right { top: 50px; right: 10px; }
-.d-pad-center {
-    position: absolute;
-    top: 50px; left: 50px;
-    width: 40px; height: 40px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 50%;
-}
+.d-pad.left { top: 0; left: 0; border-right: 1px solid rgba(0,0,0,0.3); }
+.d-pad.right { top: 0; right: 0; }
 
 /* Action Buttons Container */
 #mobile-action-btns {
-    display: flex;
-    gap: 20px;
+    position: relative;
+    width: 160px;
+    height: 140px;
     pointer-events: auto;
     touch-action: none;
-    align-items: flex-end;
-    margin-bottom: 10px;
 }
 
 /* Action Buttons */
 .mobile-btn {
-    width: 70px;
-    height: 70px;
+    position: absolute;
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.4);
     color: rgba(255, 255, 255, 0.8);
     font-family: 'Press Start 2P', cursive;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1161,9 +1152,13 @@ footer {
     cursor: pointer;
 }
 
+#btn-jump { top: 0; right: 45px; }
+.mobile-btn[data-key="s"] { bottom: 0; left: 0; }
+.mobile-btn[data-key="a"] { bottom: 0; right: 0; }
+
 .mobile-btn .btn-desc {
     font-family: 'Noto Sans KR', sans-serif;
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     margin-top: 4px;
     opacity: 0.8;
 }

@@ -634,36 +634,115 @@ document.addEventListener('DOMContentLoaded', () => {
     // Action Buttons
     document.querySelectorAll('.mobile-btn').forEach(btn => {
         const key = btn.dataset.key;
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            btn.classList.add('active');
-            handleMobileKey(key, true);
-        }, {passive: false});
         
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            btn.classList.remove('active');
-            handleMobileKey(key, false);
-        }, {passive: false});
-        
-        btn.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            btn.classList.remove('active');
-            handleMobileKey(key, false);
-        }, {passive: false});
+        if (key === 'ArrowUp') { // Jump button with Swipe Down for Down-Jump
+            let jumpTouchId = null;
+            let jumpStartY = 0;
+            let isDownJumpTriggered = false;
+            let jumpTimeout;
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                jumpTouchId = e.changedTouches[0].identifier;
+                jumpStartY = e.changedTouches[0].clientY;
+                isDownJumpTriggered = false;
+                
+                // Delay normal jump slightly to check for swipe down
+                jumpTimeout = setTimeout(() => {
+                    if (!isDownJumpTriggered) handleMobileKey('ArrowUp', true);
+                }, 40);
+            }, {passive: false});
+
+            btn.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if (t.identifier === jumpTouchId) {
+                        if (!isDownJumpTriggered && t.clientY - jumpStartY > 15) {
+                            isDownJumpTriggered = true;
+                            clearTimeout(jumpTimeout);
+                            handleMobileKey('ArrowDown', true);
+                            setTimeout(() => handleMobileKey('ArrowUp', true), 20);
+                        }
+                    }
+                }
+            }, {passive: false});
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === jumpTouchId) {
+                        btn.classList.remove('active');
+                        clearTimeout(jumpTimeout);
+                        if (!isDownJumpTriggered) {
+                            // If released super fast, ensure jump is still sent
+                            handleMobileKey('ArrowUp', true);
+                            setTimeout(() => handleMobileKey('ArrowUp', false), 20);
+                        } else {
+                            handleMobileKey('ArrowUp', false);
+                            handleMobileKey('ArrowDown', false);
+                        }
+                        jumpTouchId = null;
+                    }
+                }
+            }, {passive: false});
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === jumpTouchId) {
+                        btn.classList.remove('active');
+                        clearTimeout(jumpTimeout);
+                        handleMobileKey('ArrowUp', false);
+                        handleMobileKey('ArrowDown', false);
+                        jumpTouchId = null;
+                    }
+                }
+            }, {passive: false});
+        } else {
+            // Normal buttons
+            let btnTouchId = null;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                btnTouchId = e.changedTouches[0].identifier;
+                handleMobileKey(key, true);
+            }, {passive: false});
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === btnTouchId) {
+                        btn.classList.remove('active');
+                        handleMobileKey(key, false);
+                        btnTouchId = null;
+                    }
+                }
+            }, {passive: false});
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === btnTouchId) {
+                        btn.classList.remove('active');
+                        handleMobileKey(key, false);
+                        btnTouchId = null;
+                    }
+                }
+            }, {passive: false});
+        }
     });
 
-    // D-Pad Sliding Support
+    // D-Pad Sliding Support (Multi-touch aware)
     const joystick = document.getElementById('mobile-joystick');
+    let joystickTouchId = null;
     let activeDpadKey = null;
     let activeDpadEl = null;
 
     if (joystick) {
-        joystick.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
+        const updateJoystick = (touch) => {
             const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            
             if (el && el.classList.contains('d-pad')) {
                 const key = el.dataset.key;
                 if (activeDpadKey !== key) {
@@ -677,44 +756,63 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.classList.add('active');
                 }
             } else if (activeDpadKey) {
+                // If dragged outside the left/right areas
                 handleMobileKey(activeDpadKey, false);
                 if (activeDpadEl) activeDpadEl.classList.remove('active');
                 activeDpadKey = null;
                 activeDpadEl = null;
             }
-        }, {passive: false});
+        };
 
         joystick.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            const touch = e.touches[0];
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (el && el.classList.contains('d-pad')) {
-                activeDpadKey = el.dataset.key;
-                activeDpadEl = el;
-                handleMobileKey(activeDpadKey, true);
-                el.classList.add('active');
+            // Assign to the first touch that hits a d-pad if not already assigned
+            if (joystickTouchId === null) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                    if (el && el.classList.contains('d-pad')) {
+                        joystickTouchId = touch.identifier;
+                        updateJoystick(touch);
+                        break;
+                    }
+                }
             }
         }, {passive: false});
 
-        joystick.addEventListener('touchend', (e) => {
+        joystick.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (activeDpadKey) {
-                handleMobileKey(activeDpadKey, false);
-                if (activeDpadEl) activeDpadEl.classList.remove('active');
-                activeDpadKey = null;
-                activeDpadEl = null;
+            if (joystickTouchId !== null) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === joystickTouchId) {
+                        updateJoystick(touch);
+                        break;
+                    }
+                }
             }
         }, {passive: false});
-        
-        joystick.addEventListener('touchcancel', (e) => {
+
+        const releaseJoystick = (e) => {
             e.preventDefault();
-            if (activeDpadKey) {
-                handleMobileKey(activeDpadKey, false);
-                if (activeDpadEl) activeDpadEl.classList.remove('active');
-                activeDpadKey = null;
-                activeDpadEl = null;
+            if (joystickTouchId !== null) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickTouchId) {
+                        if (activeDpadKey) {
+                            handleMobileKey(activeDpadKey, false);
+                            if (activeDpadEl) activeDpadEl.classList.remove('active');
+                            activeDpadKey = null;
+                            activeDpadEl = null;
+                        }
+                        joystickTouchId = null;
+                        break;
+                    }
+                }
             }
-        }, {passive: false});
+        };
+
+        joystick.addEventListener('touchend', releaseJoystick, {passive: false});
+        joystick.addEventListener('touchcancel', releaseJoystick, {passive: false});
     }
 });
 
