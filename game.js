@@ -2882,7 +2882,34 @@ function updateHUD() {
         p2CooldownBar.style.width = `${100 - p2SpecialPercent}%`;
         hudCache.p2Special = p2SpecialPercent;
     }
+
+    // Update Mobile Special Button Cooldown
+    const mobileSBtn = document.querySelector('.mobile-btn[data-key="s"]');
+    if (mobileSBtn) {
+        const localPlayer = (gameMode === 'online' && myRole === 'Player2') ? player2 : player1;
+        if (localPlayer) {
+            let specialPercent = 0;
+            if (localPlayer.characterType === 'quokka') {
+                if (localPlayer.specialActiveFrames > 0) {
+                    specialPercent = (localPlayer.specialActiveFrames / localPlayer.maxSpecialActive) * 100;
+                } else {
+                    specialPercent = (localPlayer.specialCooldown / localPlayer.specialMaxCooldown) * 100;
+                }
+            } else {
+                specialPercent = (localPlayer.specialCooldown / localPlayer.specialMaxCooldown) * 100;
+            }
+            
+            if (specialPercent > 0.01) {
+                mobileSBtn.style.background = `linear-gradient(rgba(0,0,0,0.7) ${specialPercent}%, rgba(255,152,0,0.3) ${specialPercent}%)`;
+                mobileSBtn.style.opacity = '0.7';
+            } else {
+                mobileSBtn.style.background = 'rgba(0, 0, 0, 0.3)';
+                mobileSBtn.style.opacity = '1';
+            }
+        }
+    }
 }
+
 
 // --- Main Game Loop ---
 let lastTime = 0;

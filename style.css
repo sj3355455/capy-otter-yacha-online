@@ -1173,3 +1173,235 @@ footer {
     color: #fff;
     transform: scale(0.95);
 }
+
+/* =========================================
+   Mobile Touch Devices Layout Optimization
+   ========================================= */
+@media (pointer: coarse) and (max-width: 1024px) {
+    body {
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+    
+    #game-container {
+        padding: 0;
+        gap: 0;
+        justify-content: center;
+        height: 100vh;
+        min-height: 100vh;
+        max-width: 100vw;
+    }
+    
+    #hud {
+        position: absolute;
+        top: 8px;
+        width: 90% !important;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 60;
+        padding: 6px 12px !important;
+        background: rgba(15, 18, 36, 0.75) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+    }
+    
+    .player-hud {
+        max-width: 44% !important;
+        gap: 3px !important;
+    }
+    
+    .player-name {
+        font-size: 0.75rem !important;
+    }
+    
+    .player-hp-text {
+        font-size: 0.65rem !important;
+    }
+    
+    .hp-bar-container {
+        height: 8px !important;
+        border-radius: 4px !important;
+    }
+    
+    .hp-bar-fill, .hp-bar-ghost {
+        border-radius: 4px !important;
+    }
+    
+    .cooldown-bar-container {
+        height: 3px !important;
+        border-radius: 2px !important;
+    }
+    
+    .skills-container {
+        display: none !important; /* Hide skills indicator in HUD to save space */
+    }
+    
+    #vs-badge {
+        font-size: 0.9rem !important;
+        padding: 2px 6px !important;
+    }
+    
+    #canvas-wrapper {
+        width: 100vw;
+        height: 56.25vw; /* 16:9 */
+        max-width: 100vw;
+        max-height: 100vh;
+        border-radius: 0; /* Fullscreen feel */
+        border: none;
+        box-shadow: none;
+    }
+    
+    @media (min-aspect-ratio: 16/9) {
+        #canvas-wrapper {
+            height: 100vh;
+            width: 177.78vh; /* 16:9 */
+        }
+    }
+    
+    footer {
+        display: none !important;
+    }
+
+    /* Start Overlay UI Optimization on Mobile */
+    .game-title {
+        font-size: 1.8rem !important;
+        margin-top: 30px !important;
+        margin-bottom: 8px !important;
+        letter-spacing: 2px !important;
+    }
+    
+    .title-start-btn {
+        width: 200px !important;
+        height: 38px !important;
+        font-size: 0.75rem !important;
+    }
+
+    #server-config-container {
+        margin-top: 2px !important;
+        gap: 4px !important;
+    }
+    
+    #server-ip, #room-id-input {
+        width: 180px !important;
+        height: 28px !important;
+        font-size: 0.7rem !important;
+        padding: 2px 6px !important;
+    }
+
+    #connection-status {
+        font-size: 0.7rem !important;
+    }
+
+    /* Character Selection Screen Layout for Mobile */
+    #char-select-screen {
+        padding: 10px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 10px !important;
+    }
+
+    .start-panel {
+        width: 140px !important;
+        padding: 8px 10px !important;
+        border-width: 2px !important;
+        border-radius: 8px !important;
+    }
+
+    .panel-title {
+        font-size: 0.55rem !important;
+        margin-bottom: 8px !important;
+        padding-bottom: 4px !important;
+    }
+
+    .char-selector {
+        gap: 4px !important;
+    }
+
+    .char-btn {
+        padding: 4px 6px !important;
+        font-size: 0.55rem !important;
+        border-radius: 4px !important;
+    }
+
+    .key-list {
+        display: none !important; /* Hide key explanation on mobile */
+    }
+
+    .start-center {
+        gap: 8px !important;
+        padding: 0 5px !important;
+    }
+
+    .char-preview-container {
+        gap: 15px !important;
+        margin-bottom: 0 !important;
+    }
+
+    .preview-box {
+        padding: 4px 6px !important;
+        border-radius: 8px !important;
+    }
+
+    .preview-box canvas {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .preview-label {
+        font-size: 0.6rem !important;
+    }
+
+    #p1-ready-label, #p2-ready-label {
+        font-size: 10px !important;
+    }
+
+    .map-select-container {
+        width: 180px !important;
+        padding: 6px 10px !important;
+        border-radius: 8px !important;
+    }
+
+    .map-select-title {
+        font-size: 0.65rem !important;
+    }
+
+    .map-selector {
+        gap: 4px !important;
+    }
+
+    .map-btn, .diff-btn {
+        padding: 4px 6px !important;
+        font-size: 0.55rem !important;
+        border-radius: 4px !important;
+    }
+
+    #battle-btn {
+        width: 160px !important;
+        height: 38px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Lobby Screen for Mobile */
+    #lobby-screen {
+        padding: 10px !important;
+    }
+
+    .lobby-title {
+        font-size: 1.2rem !important;
+        margin-bottom: 10px !important;
+    }
+
+    .lobby-container {
+        gap: 10px !important;
+        flex-direction: column !important;
+    }
+
+    .lobby-panel {
+        width: 100% !important;
+        max-width: 320px !important;
+        height: 120px !important;
+    }
+}
+
