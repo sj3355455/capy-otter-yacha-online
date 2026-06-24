@@ -1097,6 +1097,32 @@ footer {
     .overlay.active ~ #mobile-controls {
         display: none !important;
     }
+
+    /* Make control buttons (Back / Mute) fixed, larger, and extremely tap-friendly on mobile */
+    .ingame-control-btn {
+        position: fixed !important;
+        top: 15px !important;
+        width: 48px !important;
+        height: 48px !important;
+        z-index: 1000 !important; /* Stay above all content and overlays */
+    }
+    
+    .ingame-control-btn svg {
+        width: 22px !important;
+        height: 22px !important;
+    }
+    
+    .ingame-control-btn.back-btn {
+        left: 15px !important;
+    }
+    
+    .ingame-control-btn.bgm-mute-btn {
+        right: 73px !important;
+    }
+    
+    .ingame-control-btn.total-mute-btn {
+        right: 15px !important;
+    }
 }
 
 /* D-Pad Container */
