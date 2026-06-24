@@ -19,10 +19,12 @@ const io = new Server(server, {
     }
 });
 
+const UDP_PORT = parseInt(process.env.UDP_PORT) || 443;
+
 // Geckos UDP Server with STUN configuration for NAT traversal
 const ioUdp = geckos({
     cors: { origin: '*', allowAuthorization: true },
-    portRange: { min: 9208, max: 9208 },
+    portRange: { min: UDP_PORT, max: UDP_PORT },
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
@@ -33,7 +35,6 @@ const ioUdp = geckos({
 });
 
 const HTTP_PORT = process.env.PORT || 3000;
-const UDP_PORT = process.env.UDP_PORT || 9208; // 배포 시 process.env.UDP_PORT = 443 설정 가능
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.use(express.static(__dirname));
@@ -355,4 +356,4 @@ server.listen(HTTP_PORT, () => {
 });
 
 ioUdp.addServer(server);
-console.log(`[UDP] Geckos.io WebRTC Server attached to HTTP server. Using UDP port 9208 for data channels.`);
+console.log(`[UDP] Geckos.io WebRTC Server attached to HTTP server. Using UDP port ${UDP_PORT} for data channels.`);
