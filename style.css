@@ -482,6 +482,9 @@ body {
         inset 0 1px 3px rgba(255,255,255,0.35);
     transition: all 0.15s ease;
     text-shadow: 0 1px 2px rgba(255,255,200,0.4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .wood-btn:hover {
@@ -1352,10 +1355,11 @@ footer {
         font-size: 10px !important;
     }
 
-    .map-select-container {
-        width: 180px !important;
+    .map-select-container, #difficulty-select-container {
+        width: 220px !important;
         padding: 6px 10px !important;
         border-radius: 8px !important;
+        box-sizing: border-box !important;
     }
 
     .map-select-title {
@@ -1370,12 +1374,17 @@ footer {
         padding: 4px 6px !important;
         font-size: 0.55rem !important;
         border-radius: 4px !important;
+        white-space: nowrap !important;
     }
 
     #battle-btn {
         width: 160px !important;
         height: 38px !important;
         font-size: 0.8rem !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     /* Lobby Screen for Mobile */
@@ -1397,6 +1406,33 @@ footer {
         width: 100% !important;
         max-width: 320px !important;
         height: 120px !important;
+    }
+
+    /* Game Over Overlay Mobile Optimization */
+    #gameover-overlay {
+        padding: 10px !important;
+        justify-content: center !important;
+        gap: 10px !important;
+    }
+    #victory-img {
+        max-width: 180px !important;
+        max-height: 110px !important;
+        margin-bottom: 8px !important;
+    }
+    #winner-text {
+        font-size: 1.8rem !important;
+        margin-bottom: 8px !important;
+        letter-spacing: 2px !important;
+    }
+    .gameover-btn-row {
+        gap: 15px !important;
+        margin-top: 5px !important;
+    }
+    .gameover-btn-row .glow-btn {
+        font-size: 0.75rem !important;
+        padding: 8px 16px !important;
+        letter-spacing: 1px !important;
+        border-radius: 20px !important;
     }
 }
 
