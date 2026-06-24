@@ -625,7 +625,7 @@ function handleMobileKey(key, isDown) {
     if (gameMode !== 'online' || (myRole === 'Player1' && isP1Key) || (myRole === 'Player2' && isP2Key)) {
         if (key in keys && keys[key] !== isDown) {
             keys[key] = isDown;
-            if (gameMode === 'online') sendHybridUpdate(isDown ? 'keyPress' : 'keyRelease', { key: key, state: isDown });
+            if (gameMode === 'online') sendHybridUpdate('keyPress', { key: key, state: isDown });
         }
     }
 }
