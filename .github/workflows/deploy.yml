@@ -20,6 +20,12 @@ jobs:
           cp *.css dist/ 2>/dev/null || true
           if [ -d "image" ]; then cp -r image dist/; fi
           if [ -d "sound" ]; then cp -r sound dist/; fi
+          if [ -d "bgm" ]; then cp -r bgm dist/; fi
+          if [ -d "character" ]; then cp -r character dist/; fi
+          if [ -d "map" ]; then cp -r map dist/; fi
+          if [ -d "victory" ]; then cp -r victory dist/; fi
+          if [ -d "skill" ]; then cp -r skill dist/; fi
+          if [ -d "sound effect" ]; then cp -r "sound effect" dist/; fi
 
       - name: Download Butler (Stable Mirror)
         run: |
