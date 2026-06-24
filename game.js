@@ -1329,6 +1329,10 @@ class Player {
         const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
         const isMovingNetwork = this.positionBuffer !== undefined && Math.abs(this.vx) > 0.5;
 
+        // Owl specific movement animation condition: must have actual horizontal speed, and not diving
+        const isOwlMoving = this.characterType === 'owl' && Math.abs(this.vx) > 0.1 && !(!this.isGrounded && this.inputs.down);
+        const shouldShowMoveAnim = isOwlMoving || (this.characterType !== 'owl' && (isMovingLocally || isMovingNetwork));
+
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
             index = 0;
@@ -1344,7 +1348,7 @@ class Player {
             activeList = anims.attack;
             const progress = this.maxAttackActive - this.attackActiveFrames;
             index = Math.min(activeList.length - 1, Math.floor(progress / (this.maxAttackActive / activeList.length)));
-        } else if (isMovingLocally || isMovingNetwork || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
+        } else if (shouldShowMoveAnim) {
             activeList = anims.move;
             index = this.animFrameIndex % activeList.length;
         } else {
@@ -1391,13 +1395,17 @@ class Player {
         const isMovingLocally = this.inputs.moveLeft || this.inputs.moveRight;
         const isMovingNetwork = this.positionBuffer !== undefined && Math.abs(this.vx) > 0.5;
 
+        // Owl specific movement animation condition: must have actual horizontal speed, and not diving
+        const isOwlMoving = this.characterType === 'owl' && Math.abs(this.vx) > 0.1 && !(!this.isGrounded && this.inputs.down);
+        const shouldShowMoveAnim = isOwlMoving || (this.characterType !== 'owl' && (isMovingLocally || isMovingNetwork));
+
         if (this.hitstunFrames > 0) {
             activeList = anims.hit;
         } else if (this.specialActiveFrames > 0 && this.characterType !== 'quokka') {
             activeList = anims.special;
         } else if (this.attackActiveFrames > 0) {
             activeList = anims.attack;
-        } else if (isMovingLocally || isMovingNetwork || (this.characterType === 'owl' && !this.isGrounded && !this.inputs.down)) {
+        } else if (shouldShowMoveAnim) {
             activeList = anims.move;
             this.animTimer += dt;
             const frameTime = 6;
@@ -1611,16 +1619,16 @@ class Player {
         let attack = this.inputs.attack;
         let special = this.inputs.special;
 
-        // Horizontal Movement (Optimized with rounded literal constants to 2 decimal places)
-        let accel = 0.38; // Base default 0.375 rounded
+        // Horizontal Movement
+        let accel = 0.38;
         if (this.characterType === 'capybara') {
-            accel = 0.26; // 0.375 * 0.7 = 0.2625
+            accel = 0.3;
         } else if (this.characterType === 'otter') {
-            accel = 0.47; // 0.375 * 1.25 = 0.46875
+            accel = 0.5;
         } else if (this.characterType === 'owl') {
-            accel = 0.86; // 0.375 * 2.30 = 0.8625
+            accel = 0.6;
         } else if (this.characterType === 'quokka') {
-            accel = this.specialActiveFrames > 0 ? 0.77 : 0.51; // 1.5x speed increase in lightning state
+            accel = this.specialActiveFrames > 0 ? 0.7 : 0.5;
         }
         
         // Owl cannot accelerate horizontally when grounded, but can still turn around
@@ -1628,15 +1636,15 @@ class Player {
             accel = 0;
         }
         
-        let maxSpeed = 3.25; // Base default 3.25
+        let maxSpeed = 3.25;
         if (this.characterType === 'capybara') {
-            maxSpeed = 2.28; // 3.25 * 0.7 = 2.275
+            maxSpeed = 2.3;
         } else if (this.characterType === 'otter') {
-            maxSpeed = 4.06; // 3.25 * 1.25 = 4.0625
+            maxSpeed = 4;
         } else if (this.characterType === 'owl') {
-            maxSpeed = 7.48; // 3.25 * 2.30 = 7.475
+            maxSpeed = 6;
         } else if (this.characterType === 'quokka') {
-            maxSpeed = this.specialActiveFrames > 0 ? 6.59 : 4.39; // 1.5x speed increase in lightning state
+            maxSpeed = this.specialActiveFrames > 0 ? 6.5 : 4.4;
         }
 
         if (moveLeft) {
