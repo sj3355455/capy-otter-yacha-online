@@ -238,13 +238,26 @@
             <!-- Mobile Controls -->
             <div id="mobile-controls">
                 <div id="mobile-joystick">
-                    <div class="d-pad left" data-key="ArrowLeft"></div>
-                    <div class="d-pad right" data-key="ArrowRight"></div>
+                    <div class="d-pad left" data-key="ArrowLeft">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </div>
+                    <div class="d-pad right" data-key="ArrowRight">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
                 </div>
                 <div id="mobile-action-btns">
-                    <button class="mobile-btn" data-key="ArrowUp" id="btn-jump">J<span class="btn-desc">점프</span></button>
-                    <button class="mobile-btn" data-key="a">A<span class="btn-desc">공격</span></button>
-                    <button class="mobile-btn" data-key="s">S<span class="btn-desc">스킬</span></button>
+                    <button class="mobile-btn" data-key="ArrowUp" id="btn-jump">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="margin-bottom: 2px;"><path d="M12 21c-4 0-6-3-6-7s4-8 6-8 6 4 6 8-2 7-6 7z"/><path d="M8 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path d="M14 3.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path d="M20 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                        <span class="btn-desc">점프</span>
+                    </button>
+                    <button class="mobile-btn" data-key="a">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 2px;"><path d="M4 10v6"/><path d="M7 10v6"/><path d="M10 10v6"/><path d="M13 10v6"/><rect x="2" y="8" width="14" height="10" rx="2"/><path d="M16 11h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4"/></svg>
+                        <span class="btn-desc">공격</span>
+                    </button>
+                    <button class="mobile-btn" data-key="s">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 2px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span class="btn-desc">스킬</span>
+                    </button>
                 </div>
             </div>
         </div>

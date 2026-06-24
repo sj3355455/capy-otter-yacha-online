@@ -1864,10 +1864,12 @@ class Player {
 
         // Jumping
         if (jump && this.isGrounded) {
-            this.vy = this.jumpPower || -6.6; 
-            this.isGrounded = false;
-            // Spawn dust on jump
-            spawnDustParticles(this.x + this.width / 2, this.y + this.height, 6);
+            if (!this.inputs.down) {
+                this.vy = this.jumpPower || -6.6; 
+                this.isGrounded = false;
+                // Spawn dust on jump
+                spawnDustParticles(this.x + this.width / 2, this.y + this.height, 6);
+            }
         }
 
         // Apply Friction
