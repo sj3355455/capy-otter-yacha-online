@@ -2803,8 +2803,10 @@ function gameLoop(timestamp) {
                     opponentP.x = opponentP.lastNetworkX;
                     opponentP.y = opponentP.lastNetworkY;
                 } else {
-                    // Scale the 15% (0.15) lerp factor by dt to remain independent of framerate
-                    const lerpFactor = Math.min(1, 0.15 * (dt || 1));
+                    // 거리가 멀수록(오차가 클수록) 보간 속도를 동적으로 올려 빠른 캐릭터(부엉이 등)의 추적 속도를 극대화합니다.
+                    // 오차가 5px 이내로 미세할 때는 12%로 부드럽게 스무딩하고, 100px 이상 벌어지면 최대 35% 강도로 타겟에 빠르게 밀착시킵니다.
+                    const baseFactor = 0.12 + Math.min(0.23, (dist / 100) * 0.23);
+                    const lerpFactor = Math.min(1, baseFactor * (dt || 1));
                     opponentP.x = opponentP.x + (opponentP.lastNetworkX - opponentP.x) * lerpFactor;
                     opponentP.y = opponentP.y + (opponentP.lastNetworkY - opponentP.y) * lerpFactor;
                 }
