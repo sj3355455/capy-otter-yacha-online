@@ -1074,10 +1074,10 @@ footer {
    ========================================= */
 #mobile-controls {
     display: none;
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     left: 0;
-    width: 100%;
+    width: 100vw;
     height: 150px;
     pointer-events: none;
     z-index: 50; /* Above canvas, below overlays */
@@ -1090,7 +1090,7 @@ footer {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        padding: 0 40px;
+        padding: 0 20px;
     }
     
     /* When #start-overlay or #gameover-overlay is active, hide mobile controls so they don't block menus */
