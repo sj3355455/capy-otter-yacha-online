@@ -3112,9 +3112,9 @@ function gameLoop(timestamp) {
     // 7. Update camera shake timer
     updateCameraShake(dt);
 
-    // 8. Sync state with server periodically (60Hz)
+    // 8. Sync state with server periodically (30Hz)
     const now = performance.now();
-    if (now - lastStateEmitTime >= 16.6 && (socket || geckosChannel) && myRole) {
+    if (now - lastStateEmitTime >= 33.3 && (socket || geckosChannel) && myRole) {
         lastStateEmitTime = now;
         let myP = myRole === 'Player1' ? player1 : player2;
         if (myP) {
