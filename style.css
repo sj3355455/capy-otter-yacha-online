@@ -1150,6 +1150,10 @@ footer {
 }
 .d-pad.active { background: rgba(255, 255, 255, 0.4); }
 
+.d-pad svg, .d-pad path {
+    pointer-events: none;
+}
+
 .d-pad.left { top: 0; left: 0; border-right: 1px solid rgba(0,0,0,0.3); }
 .d-pad.right { top: 0; right: 0; }
 
