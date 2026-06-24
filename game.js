@@ -614,6 +614,110 @@ function mapLocalKey(key) {
     return key;
 }
 
+// Mobile Touch Controls
+function handleMobileKey(key, isDown) {
+    key = mapLocalKey(key);
+    if (!key) return;
+    
+    const isP1Key = ['w', 'a', 's', 'd', 'f', 'g'].includes(key);
+    const isP2Key = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(key);
+    
+    if (gameMode !== 'online' || (myRole === 'Player1' && isP1Key) || (myRole === 'Player2' && isP2Key)) {
+        if (key in keys && keys[key] !== isDown) {
+            keys[key] = isDown;
+            if (gameMode === 'online') sendHybridUpdate(isDown ? 'keyPress' : 'keyRelease', { key: key, state: isDown });
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Action Buttons
+    document.querySelectorAll('.mobile-btn').forEach(btn => {
+        const key = btn.dataset.key;
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            btn.classList.add('active');
+            handleMobileKey(key, true);
+        }, {passive: false});
+        
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            btn.classList.remove('active');
+            handleMobileKey(key, false);
+        }, {passive: false});
+        
+        btn.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            btn.classList.remove('active');
+            handleMobileKey(key, false);
+        }, {passive: false});
+    });
+
+    // D-Pad Sliding Support
+    const joystick = document.getElementById('mobile-joystick');
+    let activeDpadKey = null;
+    let activeDpadEl = null;
+
+    if (joystick) {
+        joystick.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (el && el.classList.contains('d-pad')) {
+                const key = el.dataset.key;
+                if (activeDpadKey !== key) {
+                    if (activeDpadKey) {
+                        handleMobileKey(activeDpadKey, false);
+                        if (activeDpadEl) activeDpadEl.classList.remove('active');
+                    }
+                    activeDpadKey = key;
+                    activeDpadEl = el;
+                    handleMobileKey(key, true);
+                    el.classList.add('active');
+                }
+            } else if (activeDpadKey) {
+                handleMobileKey(activeDpadKey, false);
+                if (activeDpadEl) activeDpadEl.classList.remove('active');
+                activeDpadKey = null;
+                activeDpadEl = null;
+            }
+        }, {passive: false});
+
+        joystick.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (el && el.classList.contains('d-pad')) {
+                activeDpadKey = el.dataset.key;
+                activeDpadEl = el;
+                handleMobileKey(activeDpadKey, true);
+                el.classList.add('active');
+            }
+        }, {passive: false});
+
+        joystick.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (activeDpadKey) {
+                handleMobileKey(activeDpadKey, false);
+                if (activeDpadEl) activeDpadEl.classList.remove('active');
+                activeDpadKey = null;
+                activeDpadEl = null;
+            }
+        }, {passive: false});
+        
+        joystick.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            if (activeDpadKey) {
+                handleMobileKey(activeDpadKey, false);
+                if (activeDpadEl) activeDpadEl.classList.remove('active');
+                activeDpadKey = null;
+                activeDpadEl = null;
+            }
+        }, {passive: false});
+    }
+});
+
 // Key Listeners
 window.addEventListener('keydown', (e) => {
     let key = e.key.length === 1 ? e.key.toLowerCase() : e.key;

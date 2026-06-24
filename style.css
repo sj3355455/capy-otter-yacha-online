@@ -1065,3 +1065,111 @@ footer {
         box-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
     }
 }
+
+/* =========================================
+   Mobile Controls
+   ========================================= */
+#mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    pointer-events: none;
+    z-index: 50; /* Above canvas, below overlays */
+    box-sizing: border-box;
+}
+
+/* Only show on touch devices */
+@media (pointer: coarse) and (max-width: 1024px) {
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 0 40px;
+    }
+    
+    /* When #start-overlay or #gameover-overlay is active, hide mobile controls so they don't block menus */
+    .overlay.active ~ #mobile-controls {
+        display: none !important;
+    }
+}
+
+/* D-Pad Container */
+#mobile-joystick {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    pointer-events: auto;
+    touch-action: none; /* Prevent scroll */
+}
+
+/* D-Pad Buttons */
+.d-pad {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    transition: background 0.1s;
+}
+.d-pad.active { background: rgba(255, 255, 255, 0.6); }
+
+.d-pad.up { top: 10px; left: 50px; }
+.d-pad.down { bottom: 10px; left: 50px; }
+.d-pad.left { top: 50px; left: 10px; }
+.d-pad.right { top: 50px; right: 10px; }
+.d-pad-center {
+    position: absolute;
+    top: 50px; left: 50px;
+    width: 40px; height: 40px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+}
+
+/* Action Buttons Container */
+#mobile-action-btns {
+    display: flex;
+    gap: 20px;
+    pointer-events: auto;
+    touch-action: none;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+/* Action Buttons */
+.mobile-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.1s;
+    cursor: pointer;
+}
+
+.mobile-btn .btn-desc {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.6rem;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+.mobile-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    color: #fff;
+    transform: scale(0.95);
+}
