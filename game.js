@@ -1182,8 +1182,8 @@ class Particle {
         const alpha = this.life / this.maxLife;
         ctx.save();
         if (this.glow) {
-            ctx.shadowBlur = this.isRing ? 20 : 10;
-            ctx.shadowColor = this.color;
+            // ctx.shadowBlur = this.isRing ? 20 : 10;
+            // ctx.shadowColor = this.color;
         }
         ctx.globalAlpha = alpha;
         
@@ -1329,8 +1329,8 @@ class Projectile {
                 } else {
                     // Fallback feather vector drawing (Mint colored diamond/leaf shape)
                     ctx.save();
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = this.color;
+                    // ctx.shadowBlur = 10;
+                    // ctx.shadowColor = this.color;
                     ctx.fillStyle = this.color;
                     ctx.beginPath();
                     ctx.moveTo(this.x - this.size, this.y);
@@ -1344,8 +1344,8 @@ class Projectile {
             } else {
                 // Owl Special skill GALE FORCE (Wind vortex drawing)
                 ctx.save();
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = this.color;
+                // ctx.shadowBlur = 15;
+                // ctx.shadowColor = this.color;
                 ctx.strokeStyle = this.color;
                 ctx.lineWidth = 3;
                 
@@ -1372,8 +1372,8 @@ class Projectile {
             }
         } else {
             ctx.save();
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = this.color;
+            // ctx.shadowBlur = 20;
+            // ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
             
             // Main energy core
@@ -2219,8 +2219,8 @@ class Player {
     draw(ctx) {
 
         ctx.save();
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = this.color;
+        // ctx.shadowBlur = 12;
+        // ctx.shadowColor = this.color;
 
         // Draw Player Sprite if spritesheet is loaded, otherwise fallback to neon vector
         if (this.spriteSheet && this.spriteSheet.complete && this.spriteSheet.width > 0) {
@@ -2241,8 +2241,8 @@ class Player {
                     ctx.globalCompositeOperation = 'screen';
                     
                     // Neon red trail outline glow effect
-                    ctx.shadowBlur = 18;
-                    ctx.shadowColor = '#ff003c';
+                    // ctx.shadowBlur = 18;
+                    // ctx.shadowColor = '#ff003c';
 
                     const sx = hist.animFrameIndex * frameWidth;
                     
@@ -2278,8 +2278,8 @@ class Player {
                     ctx.globalCompositeOperation = 'screen';
                     
                     // Yellow/gold lightning glow
-                    ctx.shadowBlur = 18;
-                    ctx.shadowColor = '#fbc02d'; // Gold glow
+                    // ctx.shadowBlur = 18;
+                    // ctx.shadowColor = '#fbc02d'; // Gold glow
 
                     const sx = hist.animFrameIndex * frameWidth;
                     
@@ -2334,8 +2334,8 @@ class Player {
 
             // 1. Draw Flat Aura Ring under feet to preserve the neon concept without bleeding into the sprite
             ctx.save();
-            ctx.shadowBlur = 24; 
-            ctx.shadowColor = this.color;
+            // ctx.shadowBlur = 24; 
+            // ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
             ctx.globalAlpha = 0.45; 
             ctx.beginPath();
@@ -2345,7 +2345,7 @@ class Player {
 
             // 2. Draw Sprite with NO shadow bleed to protect original pixel colors (eyes, white eyes, etc.)
             ctx.save();
-            ctx.shadowBlur = 0; // Disable shadow glow on the sprite itself!
+            // ctx.shadowBlur = 0; // Disable shadow glow on the sprite itself!
             ctx.scale(this.faceDir, 1);
 
             let currentOffsetX = this.spriteOffsetX || 0;
@@ -2423,8 +2423,8 @@ class Player {
 
             // Cyber Eyes (indicating direction)
             ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = '#ffffff';
-            ctx.shadowBlur = 8;
+            // ctx.shadowColor = '#ffffff';
+            // ctx.shadowBlur = 8;
             const eyeHeight = 8;
             const eyeWidth = 12;
             const eyeY = this.y + 16;
@@ -2448,8 +2448,8 @@ class Player {
         // Define dynamic unique colors: P1 is Orange, P2 is Sky Blue
         const indicatorColor = this.id === 1 ? '#ff7700' : '#00ccff';
         
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = indicatorColor;
+        // ctx.shadowBlur = 8;
+        // ctx.shadowColor = indicatorColor;
         ctx.fillStyle = indicatorColor;
         
         // Calculate Y position above the player's sprite head
@@ -2508,8 +2508,8 @@ function drawLightningEffect(ctx, x, y, width, height) {
 
     // Adjusted line width (2.25~4.5px)
     ctx.lineWidth = (1.5 + seededRandom() * 1.5) * 1.5;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#fbc02d'; // gold glow
+    // ctx.shadowBlur = 12;
+    // ctx.shadowColor = '#fbc02d'; // gold glow
 
     const sparks = 3;
     const cx = x + width / 2;
@@ -2674,8 +2674,8 @@ function drawEnvironment(ctx) {
 
         // 2. Draw Sun
         ctx.save();
-        ctx.shadowBlur = 40;
-        ctx.shadowColor = '#fff9d6';
+        // ctx.shadowBlur = 40;
+        // ctx.shadowColor = '#fff9d6';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
         ctx.arc(850, 80, 50, 0, Math.PI * 2);
@@ -3535,8 +3535,8 @@ function drawPreview(pNum, charType) {
         
         const color = '#ffffff'; // White for both P1 and P2 random selection
         ctx.fillStyle = color;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 15;
+        // ctx.shadowColor = color;
+        // ctx.shadowBlur = 15;
         
         ctx.fillText('?', canvas.width / 2, canvas.height / 2);
         ctx.restore();
