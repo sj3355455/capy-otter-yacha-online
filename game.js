@@ -1023,9 +1023,9 @@ class Projectile {
         this.size = size;
         this.hitboxRadius = size;
         if (this.ownerCharacterType === 'otter' && this.isSpecial) {
-            // Otter's special projectile wave is drawn at size * 6.4 (25 * 6.4 = 160 width, ~150 height).
-            // A hitbox radius of 75 matches the visual size (diameter 150px).
-            this.hitboxRadius = 75;
+            // Otter's special projectile wave is drawn at size * 6.4 (25 * 6.4 = 160 width, ~170 height).
+            // A hitbox radius of 85 matches the visual size (diameter 170px).
+            this.hitboxRadius = 85;
         }
         this.active = true;
         this.trailTimer = 0;
