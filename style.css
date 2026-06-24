@@ -1189,7 +1189,7 @@ footer {
 }
 
 #btn-jump { 
-    bottom: 0; 
+    top: 0; 
     left: 0; 
     width: 100%; 
     height: 56px; 
@@ -1202,8 +1202,8 @@ footer {
     margin-top: 0;
 }
 
-.mobile-btn[data-key="s"] { top: 0; left: 5px; }
-.mobile-btn[data-key="a"] { top: 0; right: 5px; }
+.mobile-btn[data-key="s"] { bottom: 0; left: 5px; }
+.mobile-btn[data-key="a"] { bottom: 0; right: 5px; }
 
 .mobile-btn .btn-desc {
     font-family: 'Noto Sans KR', sans-serif;
