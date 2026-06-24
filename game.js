@@ -2236,7 +2236,7 @@ class Player {
         }
 
         // Draw Player Label (P1 or P2)
-        ctx.font = "10px 'Press Start 2P'";
+        ctx.font = "10px monospace";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         
