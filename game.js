@@ -639,19 +639,30 @@ document.addEventListener('DOMContentLoaded', () => {
             let jumpTouchId = null;
             let jumpStartY = 0;
             let isDownJumpTriggered = false;
-            let jumpTimeout;
+            let wasGroundedAtStart = false;
+            let startYAtStart = 0;
             
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 btn.classList.add('active');
-                jumpTouchId = e.changedTouches[0].identifier;
-                jumpStartY = e.changedTouches[0].clientY;
+                
+                const touch = e.changedTouches[0];
+                jumpTouchId = touch.identifier;
+                jumpStartY = touch.clientY;
                 isDownJumpTriggered = false;
                 
-                // Delay normal jump slightly to check for swipe down
-                jumpTimeout = setTimeout(() => {
-                    if (!isDownJumpTriggered) handleMobileKey('ArrowUp', true);
-                }, 40);
+                // Get local player state to handle potential down-jump override
+                const localPlayer = (gameMode === 'online' && myRole === 'Player2') ? player2 : player1;
+                if (localPlayer) {
+                    wasGroundedAtStart = localPlayer.isGrounded;
+                    startYAtStart = localPlayer.y;
+                } else {
+                    wasGroundedAtStart = false;
+                    startYAtStart = 0;
+                }
+                
+                // Trigger normal jump instantly on touch (no delay)
+                handleMobileKey('ArrowUp', true);
             }, {passive: false});
 
             btn.addEventListener('touchmove', (e) => {
@@ -659,11 +670,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const t = e.changedTouches[i];
                     if (t.identifier === jumpTouchId) {
+                        // Check if swiped down by 15px
                         if (!isDownJumpTriggered && t.clientY - jumpStartY > 15) {
                             isDownJumpTriggered = true;
-                            clearTimeout(jumpTimeout);
+                            
+                            // Stop jump and trigger down-jump
+                            handleMobileKey('ArrowUp', false);
                             handleMobileKey('ArrowDown', true);
-                            setTimeout(() => handleMobileKey('ArrowUp', true), 20);
+                            
+                            const localPlayer = (gameMode === 'online' && myRole === 'Player2') ? player2 : player1;
+                            if (localPlayer) {
+                                if (wasGroundedAtStart) {
+                                    localPlayer.y = startYAtStart; // Teleport back to platform level
+                                }
+                                localPlayer.vy = 1.0; // Instantly start falling downwards
+                                localPlayer.isGrounded = false;
+                            }
                         }
                     }
                 }
@@ -674,15 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === jumpTouchId) {
                         btn.classList.remove('active');
-                        clearTimeout(jumpTimeout);
-                        if (!isDownJumpTriggered) {
-                            // If released super fast, ensure jump is still sent
-                            handleMobileKey('ArrowUp', true);
-                            setTimeout(() => handleMobileKey('ArrowUp', false), 20);
-                        } else {
-                            handleMobileKey('ArrowUp', false);
-                            handleMobileKey('ArrowDown', false);
-                        }
+                        handleMobileKey('ArrowUp', false);
+                        handleMobileKey('ArrowDown', false);
                         jumpTouchId = null;
                     }
                 }
@@ -693,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === jumpTouchId) {
                         btn.classList.remove('active');
-                        clearTimeout(jumpTimeout);
                         handleMobileKey('ArrowUp', false);
                         handleMobileKey('ArrowDown', false);
                         jumpTouchId = null;
