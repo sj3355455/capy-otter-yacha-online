@@ -1150,7 +1150,7 @@ footer {
 }
 .d-pad.active { background: rgba(255, 255, 255, 0.4); }
 
-.d-pad svg, .d-pad path {
+.d-pad svg, .d-pad path, .mobile-btn svg, .mobile-btn path {
     pointer-events: none;
 }
 
@@ -1160,8 +1160,8 @@ footer {
 /* Action Buttons Container */
 #mobile-action-btns {
     position: relative;
-    width: 160px;
-    height: 140px;
+    width: 180px;
+    height: 145px;
     pointer-events: auto;
     touch-action: none;
 }
@@ -1169,8 +1169,8 @@ footer {
 /* Action Buttons */
 .mobile-btn {
     position: absolute;
-    width: 65px;
-    height: 65px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.4);
@@ -1188,9 +1188,22 @@ footer {
     cursor: pointer;
 }
 
-#btn-jump { top: 0; right: 45px; }
-.mobile-btn[data-key="s"] { bottom: 0; left: 0; }
-.mobile-btn[data-key="a"] { bottom: 0; right: 0; }
+#btn-jump { 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 56px; 
+    border-radius: 28px; 
+    flex-direction: row;
+    gap: 8px;
+}
+
+#btn-jump .btn-desc {
+    margin-top: 0;
+}
+
+.mobile-btn[data-key="s"] { top: 0; left: 5px; }
+.mobile-btn[data-key="a"] { top: 0; right: 5px; }
 
 .mobile-btn .btn-desc {
     font-family: 'Noto Sans KR', sans-serif;
